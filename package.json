@@ -1,0 +1,23 @@
+{
+  "name": "use-chrome-ai-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Monorepo for use-chrome-ai: headless on-device AI primitives + framework adapters for Chrome's built-in AI.",
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "dev:examples": "pnpm --filter @use-chrome-ai/examples dev",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": { "node": ">=18" },
+  "packageManager": "pnpm@9.10.0"
+}

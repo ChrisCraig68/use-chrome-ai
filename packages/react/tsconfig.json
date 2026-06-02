@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "use-chrome-ai": ["../core/src/index.ts"]
+    }
+  },
+  "include": ["src", "tests"]
+}

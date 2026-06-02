@@ -1,0 +1,68 @@
+# AGENTS.md
+
+Guidance for AI coding agents (and humans) working in this repo. For using the library in
+*your own* project, see [`llms.txt`](./llms.txt) and [`docs/api-reference.md`](./docs/api-reference.md).
+
+## What this is
+
+A **pnpm monorepo** publishing headless, framework-agnostic primitives for Chrome's built-in
+AI (Gemini Nano). Logic only — no UI components.
+
+```
+packages/core    → "use-chrome-ai"          zero-dependency, framework-agnostic core
+packages/react   → "@use-chrome-ai/react"   React hooks (peer: react; dep: use-chrome-ai)
+packages/vue     → "@use-chrome-ai/vue"     Vue composables (peer: vue; dep: use-chrome-ai)
+examples/        → Vite playground (React demos + a Vue demo), imports packages from source
+docs/            → reference, recipes, design notes, enabling built-in AI
+```
+
+## Commands
+
+```bash
+pnpm install            # install the workspace
+pnpm -r typecheck       # tsc --noEmit in every package
+pnpm -r test            # vitest (mocked AI globals — no real model needed)
+pnpm -r build           # tsup → dist (topological: core first)
+pnpm dev:examples       # Vite playground at http://localhost:5173 (Vue demo at /vue.html)
+pnpm changeset          # record a change for the next release
+```
+
+Always run `pnpm -r typecheck && pnpm -r test` after changing code. Tests run against **mocked
+globals** (see `packages/*/tests/helpers.ts`); the real Gemini Nano path is verified manually
+per [`docs/enabling-built-in-ai.md`](./docs/enabling-built-in-ai.md).
+
+## Architecture (read before changing core)
+
+- **`packages/core/src/lifecycle.ts` is the heart.** `SessionLifecycle` is a state machine over
+  a cached session, exposed as a `useSyncExternalStore`-shaped store (`subscribe`/`getSnapshot`/
+  `getServerSnapshot`). Every framework adapter binds to it. See [`docs/DESIGN.md`](./docs/DESIGN.md).
+- **Per-API factories** live in `packages/core/src/apis/`. One per global class. `task.ts` builds
+  the streaming request/response controllers (Summarizer/Writer/Rewriter/Translator).
+- The React/Vue adapters are **thin** — they own a controller and mirror its status into the
+  framework's reactivity. New methods/behavior belong in core, not the adapter.
+
+## Conventions & invariants (don't break these)
+
+- **Core must stay zero-dependency and `chrome.*`-free.** It reads only `globalThis.*` AI globals,
+  lazily, inside functions (never at module top level). This keeps it usable in web pages AND
+  extension contexts, and keeps `sideEffects:false` honest.
+- **`getSnapshot()` must return the same frozen object until a real change** — a fresh object each
+  call makes `useSyncExternalStore` infinite-loop. State is replaced wholesale in `update()`.
+- **`AbortError` is control flow, not failure.** Never `invalidate()` on it (use `isAbortError`).
+  Any *other* session-method failure calls `invalidate()` (Chrome can evict the model mid-session).
+- **Downloads need a user gesture.** `warm()` throws `ActivationRequiredError` when a download is
+  required and `navigator.userActivation.isActive` is false. Don't auto-download from effects.
+- **Hooks never reject** (they set `error`); **core `create*` functions DO reject** (imperative control).
+- **The token/quota surface is volatile — keep all of it in `core/src/usage.ts`.** Member names
+  have been renamed once already; do not spread them across files.
+- **Per-API language-hint shapes genuinely differ** (LanguageModel `expectedInputs/expectedOutputs`
+  vs task APIs `expectedInputLanguages/outputLanguage` vs Translator `sourceLanguage/targetLanguage`).
+  Each factory owns its shape; don't unify them.
+- Match the existing comment density and naming. The patterns are ported from the Nib extension;
+  prefer porting proven behavior over inventing.
+
+## Releasing
+
+Independently versioned via changesets. `pnpm changeset` → commit → on merge to `main` the
+release workflow opens a "Version Packages" PR; merging it publishes. Requires an `NPM_TOKEN`
+secret and the `@use-chrome-ai` npm org.

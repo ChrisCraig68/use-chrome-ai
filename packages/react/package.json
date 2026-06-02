@@ -1,0 +1,44 @@
+{
+  "name": "@use-chrome-ai/react",
+  "version": "0.0.0",
+  "description": "React hooks for Chrome's built-in AI (Gemini Nano), built on use-chrome-ai. Headless — bring your own UI.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "keywords": ["chrome", "ai", "gemini-nano", "built-in-ai", "react", "hooks", "on-device", "llm"],
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "use-chrome-ai": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.0.0",
+    "happy-dom": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": { "node": ">=18" }
+}
