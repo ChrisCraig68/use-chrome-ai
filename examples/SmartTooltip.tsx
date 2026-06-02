@@ -14,7 +14,7 @@ interface Selection {
 
 const ACTIONS: Array<{ label: string; build: (text: string) => string }> = [
   { label: "Explain", build: (t) => `Explain the following in one or two plain sentences:\n\n"""${t}"""` },
-  { label: "ELI5", build: (t) => `Explain the following like I'm five, in one short paragraph:\n\n"""${t}"""` },
+  { label: "Simplify", build: (t) => `Explain the following in the simplest possible terms, with no jargon, in one short paragraph:\n\n"""${t}"""` },
   { label: "Key points", build: (t) => `Summarize the following as 2–4 short bullet points:\n\n"""${t}"""` },
 ];
 
