@@ -3,8 +3,10 @@ import { type CSSProperties, useCallback, useEffect, useRef, useState } from "re
 
 /**
  * Smart tooltip: highlight any text in the passage and a popover appears next to the
- * selection with on-device AI actions that stream their answer inline. The whole thing
- * is one `usePrompt` hook + a bit of selection/positioning glue — no UI library.
+ * selection. It explains the selection on-device immediately — no extra click — and
+ * streams the answer inline. Retry re-runs the current action; Simplify and Key points
+ * swap to a different prompt on the same selection. One `usePrompt` hook + a little
+ * selection/positioning glue — no UI library.
  */
 
 interface Selection {
@@ -12,21 +14,24 @@ interface Selection {
   rect: DOMRect;
 }
 
-const ACTIONS: Array<{ label: string; build: (text: string) => string }> = [
-  {
-    label: "Explain",
-    build: (t) => `Explain the following in one or two plain sentences:\n\n"""${t}"""`,
-  },
+const DEFAULT_ACTION = {
+  label: "Explain",
+  build: (t: string) => `Explain the following in one or two plain sentences:\n\n"""${t}"""`,
+};
+
+const ALT_ACTIONS = [
   {
     label: "Simplify",
-    build: (t) =>
+    build: (t: string) =>
       `Explain the following in the simplest possible terms, with no jargon, in one short paragraph:\n\n"""${t}"""`,
   },
   {
     label: "Key points",
-    build: (t) => `Summarize the following as 2–4 short bullet points:\n\n"""${t}"""`,
+    build: (t: string) => `Summarize the following as 2–4 short bullet points:\n\n"""${t}"""`,
   },
 ];
+
+const ALL_ACTIONS = [DEFAULT_ACTION, ...ALT_ACTIONS];
 
 const PASSAGE = `The Federal Reserve raised its benchmark interest rate by a quarter point on
 Wednesday, lifting the federal funds rate to its highest level in more than two decades.
@@ -43,8 +48,9 @@ export function SmartTooltip() {
   });
 
   const [selection, setSelection] = useState<Selection | null>(null);
-  const [active, setActive] = useState<string | null>(null);
+  const [active, setActive] = useState<string>(DEFAULT_ACTION.label);
   const passageRef = useRef<HTMLParagraphElement>(null);
+  const autoRanFor = useRef<Selection | null>(null);
 
   const onMouseUp = useCallback(() => {
     const sel = window.getSelection();
@@ -56,12 +62,30 @@ export function SmartTooltip() {
     if (passageRef.current && !passageRef.current.contains(range.commonAncestorContainer)) {
       return;
     }
-    // A new selection opens a fresh tooltip: abort any in-flight stream and clear the
-    // previous answer so stale text from the last selection never lingers.
+    // A new selection opens a fresh tooltip: abort any in-flight stream so stale text from
+    // the previous selection never lingers, then let the effect below auto-run Explain.
     stop();
-    setActive(null);
     setSelection({ text, rect: range.getBoundingClientRect() });
   }, [stop]);
+
+  const runAction = useCallback(
+    (label: string, text: string) => {
+      const action = ALL_ACTIONS.find((a) => a.label === label) ?? DEFAULT_ACTION;
+      setActive(label);
+      void prompt(action.build(text));
+    },
+    [prompt],
+  );
+
+  // Auto-run Explain as soon as a new selection is made and the model is ready (covers
+  // both "ready immediately" and "ready right after the download CTA finishes").
+  useEffect(() => {
+    if (!selection || !model.isReady || autoRanFor.current === selection) {
+      return;
+    }
+    autoRanFor.current = selection;
+    runAction(DEFAULT_ACTION.label, selection.text);
+  }, [selection, model.isReady, runAction]);
 
   // Dismiss on Escape.
   useEffect(() => {
@@ -70,17 +94,11 @@ export function SmartTooltip() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const run = (label: string, build: (text: string) => string) => {
-    if (!selection) return;
-    setActive(label);
-    // The model is already downloaded by now — the download CTA gates these actions — so this just runs.
-    void prompt(build(selection.text));
-  };
-
   return (
     <div className="card">
-      <p className="muted" style={{ fontSize: 14, marginTop: 0 }}>
-        Select any text in the passage below — a smart tooltip appears with on-device AI actions.
+      <p className="muted" style={{ fontSize: 15, marginTop: 0 }}>
+        Select any text in the passage below — an on-device explanation appears instantly, with
+        options to simplify or pull out the key points.
       </p>
 
       <p ref={passageRef} onMouseUp={onMouseUp} className="passage">
@@ -101,13 +119,17 @@ export function SmartTooltip() {
               marginBottom: 10,
             }}
           >
-            <span className="badge">Smart tooltip</span>
+            <span className="tip-label">{active}</span>
             <button type="button" className="icon-btn" onClick={() => setSelection(null)}>
               ✕
             </button>
           </div>
 
-          {model.isUnavailable ? (
+          {model.isChecking ? (
+            <p className="muted" style={{ margin: 0, fontSize: 14 }}>
+              Checking availability…
+            </p>
+          ) : model.isUnavailable ? (
             <p className="error" style={{ margin: 0 }}>
               On-device AI isn't available in this browser.
             </p>
@@ -122,43 +144,56 @@ export function SmartTooltip() {
             </button>
           ) : (
             <>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {ACTIONS.map((a) => (
+              {model.isDownloading && (
+                <div className="progress-row" style={{ marginBottom: 10 }}>
+                  Downloading model… <progress value={model.progress} max={1} />
+                </div>
+              )}
+
+              <div
+                style={{
+                  fontSize: 15,
+                  lineHeight: 1.55,
+                  whiteSpace: "pre-wrap",
+                  maxHeight: 200,
+                  minHeight: 22,
+                  overflow: "auto",
+                }}
+              >
+                {result}
+                {isStreaming && <span className="blink">▋</span>}
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  marginTop: 12,
+                  paddingTop: 10,
+                  borderTop: "1px solid var(--line)",
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  disabled={isStreaming || !model.isReady}
+                  onClick={() => runAction(active, selection.text)}
+                >
+                  ↻ Retry
+                </button>
+                {ALT_ACTIONS.map((a) => (
                   <button
                     key={a.label}
                     type="button"
                     className={`btn btn-sm ${active === a.label ? "btn-primary" : ""}`}
                     disabled={isStreaming || !model.isReady}
-                    onClick={() => run(a.label, a.build)}
+                    onClick={() => runAction(a.label, selection.text)}
                   >
                     {a.label}
                   </button>
                 ))}
               </div>
-
-              {model.isDownloading && (
-                <div className="progress-row" style={{ marginTop: 10 }}>
-                  Downloading model… <progress value={model.progress} max={1} />
-                </div>
-              )}
-
-              {active && (result || isStreaming) && (
-                <div
-                  style={{
-                    marginTop: 12,
-                    paddingTop: 10,
-                    borderTop: "1px solid var(--border)",
-                    fontSize: 14,
-                    lineHeight: 1.55,
-                    whiteSpace: "pre-wrap",
-                    maxHeight: 200,
-                    overflow: "auto",
-                  }}
-                >
-                  {result}
-                  {isStreaming && <span className="blink">▋</span>}
-                </div>
-              )}
             </>
           )}
         </div>
