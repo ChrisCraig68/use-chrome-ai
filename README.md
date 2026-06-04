@@ -12,9 +12,9 @@ npm i @use-chrome-ai/vue       # Vue composables (pulls in the core)
 
 | Package | For | Quick start |
 | --- | --- | --- |
-| [`use-chrome-ai`](packages/core/README.md) | Framework-agnostic core (vanilla JS). Zero deps. | [Core →](packages/core/README.md) |
-| [`@use-chrome-ai/react`](packages/react/README.md) | React hooks. Depends on + re-exports the core. | [React →](packages/react/README.md) |
-| [`@use-chrome-ai/vue`](packages/vue/README.md) | Vue composables. Depends on + re-exports the core. | [Vue →](packages/vue/README.md) |
+| [`use-chrome-ai`](packages/core/README.md) | Framework-agnostic core (vanilla JS). Zero deps. | [Core →](docs/core.md) |
+| [`@use-chrome-ai/react`](packages/react/README.md) | React hooks. Depends on + re-exports the core. | [React →](docs/react.md) |
+| [`@use-chrome-ai/vue`](packages/vue/README.md) | Vue composables. Depends on + re-exports the core. | [Vue →](docs/vue.md) |
 
 Each adapter re-exports the core, so you can import the hooks and the `create*`/`isSupported` helpers from one place.
 
@@ -121,10 +121,9 @@ Then set **Settings → Pages → Source** to the `gh-pages` branch. The site se
 
 ## Documentation
 
-- Quick starts: [core](packages/core/README.md) · [React](packages/react/README.md) · [Vue](packages/vue/README.md)
+- Quick starts: [core](docs/core.md) · [React](docs/react.md) · [Vue](docs/vue.md)
 - [API reference](docs/api-reference.md) — every hook, core factory, and type with signatures.
 - [Enabling built-in AI](docs/enabling-built-in-ai.md) — what end-users need, iframe permission tokens, and a verify checklist (links out to Google for setup).
-- [Design notes](docs/DESIGN.md) — how the framework-agnostic core is shaped.
 - [`llms.txt`](llms.txt) — a machine-readable map of the project for AI assistants.
 - [AGENTS.md](AGENTS.md) — guidance for coding agents working in this repo.
 

@@ -14,12 +14,11 @@ Things an assistant should know before writing code with this library:
 ## Docs
 
 - [README](./README.md): overview, the one-hook chatbot, the seven APIs, the demos.
-- [Core quick start](./packages/core/README.md): vanilla JS — `createChat` + the `create*` factories.
-- [React quick start](./packages/react/README.md): the hooks.
-- [Vue quick start](./packages/vue/README.md): the composables.
+- [Core quick start](./docs/core.md): vanilla JS — `createChat` + the `create*` factories.
+- [React quick start](./docs/react.md): the hooks.
+- [Vue quick start](./docs/vue.md): the composables.
 - [API reference](./docs/api-reference.md): every hook, core factory, and type with signatures.
 - [Enabling built-in AI](./docs/enabling-built-in-ai.md): links to Google's setup docs, the iframe permission tokens, and a verify checklist.
-- [Design notes](./docs/DESIGN.md): how the framework-agnostic core is shaped.
 
 ## Packages
 

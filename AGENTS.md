@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Guidance for AI coding agents (and humans) working in this repo. For using the library in
-*your own* project, see [`llms.txt`](./llms.txt) and the per-package READMEs.
+*your own* project, see [`llms.txt`](./llms.txt) and the per-framework quick starts in `docs/`.
 
 ## What this is
 
@@ -14,11 +14,11 @@ packages/react   → "@use-chrome-ai/react"   React hooks (peer: react; dep: use
 packages/vue     → "@use-chrome-ai/vue"     Vue composables (peer: vue; dep: use-chrome-ai)
 examples/react   → standalone Vite + React demo app (imports packages from source)
 examples/vue     → standalone Vite + Vue demo app (imports packages from source)
-docs/            → API reference, design notes, enabling built-in AI
+docs/            → per-framework quick starts (core/react/vue), API reference, enabling built-in AI
 ```
 
-Each package has its own `README.md` (the public quick start). The root `README.md` is the
-light overview that links to them.
+Per-framework quick starts live in `docs/{core,react,vue}.md`; each package's `README.md` is a
+thin pointer to its doc. The root `README.md` is the light overview that links to them.
 
 ## Commands
 
@@ -41,7 +41,7 @@ per [`docs/enabling-built-in-ai.md`](./docs/enabling-built-in-ai.md).
 
 - **`packages/core/src/lifecycle.ts` is the heart.** `SessionLifecycle` is a state machine over
   a cached session, exposed as a `useSyncExternalStore`-shaped store (`subscribe`/`getSnapshot`/
-  `getServerSnapshot`). Every framework adapter binds to it. See [`docs/DESIGN.md`](./docs/DESIGN.md).
+  `getServerSnapshot`). Every framework adapter binds to it.
 - **Per-API factories** live in `packages/core/src/apis/`. One per global class. `task.ts` builds
   the streaming request/response controllers (Summarizer/Writer/Rewriter/Translator).
 - The React/Vue adapters are **thin** — they own a controller and mirror its status into the
