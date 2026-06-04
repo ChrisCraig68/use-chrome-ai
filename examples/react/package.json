@@ -9,10 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@use-chrome-ai/react": "^0.1.0",
+    "@use-chrome-ai/react": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "use-chrome-ai": "^0.1.0"
+    "use-chrome-ai": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
