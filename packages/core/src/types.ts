@@ -11,6 +11,10 @@ export type Phase = "idle" | "creating" | "running" | "streaming" | "error";
 export interface ControllerState {
   /** The underlying global class (e.g. `Summarizer`) exists in this environment. */
   readonly supported: boolean;
+  /** Whether `availability()` has resolved at least once. Until then `availability` is an
+   *  optimistic guess — gate UI on this (or {@link ModelStatus.isChecking}) to avoid
+   *  flashing a download CTA for a model that's actually already installed. */
+  readonly checked: boolean;
   readonly availability: Availability;
   readonly phase: Phase;
   /** 0..1, meaningful while a model is downloading (first `create()`). */
@@ -31,6 +35,9 @@ export interface ModelStatus {
   supported: boolean;
   /** Not supported here, or availability is `unavailable`. Render a fallback. */
   isUnavailable: boolean;
+  /** Availability hasn't been resolved yet (first `availability()` round-trip still
+   *  pending). Show a neutral "checking" state rather than committing to a download CTA. */
+  isChecking: boolean;
   /** A model download is in progress. */
   isDownloading: boolean;
   /** The model is downloaded and ready to use. */
@@ -51,6 +58,7 @@ export function deriveModelStatus(
     progress: status.downloadProgress,
     supported: status.supported,
     isUnavailable: !status.supported || status.availability === "unavailable",
+    isChecking: status.supported && !status.checked,
     isDownloading: status.phase === "creating" || status.availability === "downloading",
     isReady: status.availability === "available",
     download,
