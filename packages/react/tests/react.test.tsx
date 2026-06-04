@@ -15,6 +15,7 @@ function ChatProbe() {
   const { messages, send, model } = useChat({ system: "sys" });
   return (
     <div>
+      <span data-testid="availability">{model.availability}</span>
       <span data-testid="unavailable">{String(model.isUnavailable)}</span>
       <button type="button" onClick={() => send("hi")}>
         send
@@ -43,6 +44,17 @@ function SummarizerProbe() {
 }
 
 describe("React hooks", () => {
+  it("refreshes availability on mount without creating a session", async () => {
+    const api = makeFakeApi({ availability: "available" });
+    cleanups.push(installGlobal("LanguageModel", api.Ctor));
+
+    render(<ChatProbe />);
+
+    await waitFor(() => expect(screen.getByTestId("availability").textContent).toBe("available"));
+    expect(api.Ctor.availability).toHaveBeenCalledOnce();
+    expect(api.createCount()).toBe(0);
+  });
+
   it("useChat streams a reply into the rendered transcript", async () => {
     const api = makeFakeApi({ deltas: ["Hel", "lo"] });
     cleanups.push(installGlobal("LanguageModel", api.Ctor));

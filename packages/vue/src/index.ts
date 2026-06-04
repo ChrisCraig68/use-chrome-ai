@@ -11,6 +11,7 @@ import {
   type ComputedRef,
   computed,
   type DeepReadonly,
+  onMounted,
   onScopeDispose,
   type Ref,
   readonly,
@@ -49,6 +50,9 @@ export interface UseChatReturn {
 export function useChat(options: ChatOptions = {}): UseChatReturn {
   const chat = createChat(options);
   const status = useModelStatus(chat);
+  onMounted(() => {
+    void chat.refresh();
+  });
   const download = () => chat.download();
   const model = computed(() => deriveModelStatus(status.value, download));
   const messages = shallowRef<ChatMessage[]>(chat.messages.slice());

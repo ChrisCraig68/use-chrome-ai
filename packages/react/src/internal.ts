@@ -57,6 +57,9 @@ export interface AiStatus {
 export function useAiStatus(controller: BaseController): AiStatus {
   const status = useModelStatus(controller);
   const download = useCallback(() => controller.download(), [controller]);
+  useEffect(() => {
+    void controller.refresh();
+  }, [controller]);
   return { model: deriveModelStatus(status, download) };
 }
 
