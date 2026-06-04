@@ -62,8 +62,8 @@ function hasUserActivation(): boolean {
 
 /**
  * Shared lifecycle for every Chrome AI session: `availability()` → `create({monitor})`
- * → cached session, with download-progress reporting and eviction recovery. This is
- * the generalized, `chrome.*`-free port of the source extension's `BaseAdapter`.
+ * → cached session, with download-progress reporting and eviction recovery. A generalized
+ * adapter decoupled from any host or transport — it touches only the AI globals.
  *
  * It is a `useSyncExternalStore`-shaped observable: `subscribe`/`getSnapshot` let any
  * framework bind to status with near-zero glue.

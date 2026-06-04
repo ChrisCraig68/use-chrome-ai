@@ -1,78 +1,57 @@
-# Enabling built-in AI + verification checklist
+# Enabling built-in AI
 
-Chrome's built-in AI is real but gated. This page covers what end-users need, and how
-to verify the library against a real model (the one thing unit tests can't do — they run
-against mocked globals).
+Chrome's built-in AI is real but gated. Google owns the canonical setup docs — this page links to them and covers the two things that are specific to using this library: cross-origin iframe permissions, and a checklist for verifying against a real model.
 
-## Requirements
+## Setup (Google's docs)
 
-- **Browser:** desktop Chrome or Edge (Chromium). No Android, iOS, Safari, or Firefox.
-- **Disk:** ~22 GB free (the weights are multi-GB and Chrome won't download below a threshold).
-- **GPU:** generally >4 GB VRAM.
-- **Version:** Chrome 138+ for the stable APIs (Prompt, Summarizer). Others may need flags.
+Start here, and document the relevant bits for your own users:
 
-## Flags (web pages only — extensions are GA)
+- [Get started with built-in AI](https://developer.chrome.com/docs/ai/get-started) — hardware requirements, supported OSes, Chrome versions, and flags.
+- [Built-in AI overview](https://developer.chrome.com/docs/ai/built-in) and the [API list](https://developer.chrome.com/docs/ai/built-in-apis).
+- [Origin trials](https://developer.chrome.com/origintrials) — for production web pages, register a token per not-yet-stable API and serve it via `<meta http-equiv="origin-trial" content="…">`. The token is **your site's responsibility** — a library can't ship one.
 
-The prerequisite, then per-API flags for the ones not yet stable:
+In short: desktop Chrome/Edge only, real disk/VRAM requirements, and several APIs still need a flag or origin trial. Some are stable in Chrome 138+; check each API's page for current status.
 
-- `chrome://flags/#optimization-guide-on-device-model` → **Enabled BypassPerfRequirement**
-- `chrome://flags/#prompt-api-for-gemini-nano` → Enabled
-- `chrome://flags/#summarization-api-for-gemini-nano` → Enabled
-- `chrome://flags/#writer-api-for-gemini-nano` → Enabled
-- `chrome://flags/#rewriter-api-for-gemini-nano` → Enabled
-- `chrome://flags/#proofreader-api-for-gemini-nano` → Enabled
-- `chrome://flags/#translation-api`, `#language-detection-api` → Enabled
-
-Restart Chrome after changing flags. (Flag names drift between versions — check
-`chrome://flags` if one 404s.)
-
-## Origin trials
-
-For production web pages you register an [origin trial](https://developer.chrome.com/origintrials)
-token per API and serve it via `<meta http-equiv="origin-trial" content="…">`. The token
-is **your site's responsibility** — a library cannot ship one.
+| API | Docs |
+| --- | --- |
+| LanguageModel / Prompt | <https://developer.chrome.com/docs/ai/prompt-api> |
+| Summarizer | <https://developer.chrome.com/docs/ai/summarizer-api> |
+| Writer | <https://developer.chrome.com/docs/ai/writer-api> |
+| Rewriter | <https://developer.chrome.com/docs/ai/rewriter-api> |
+| Proofreader | <https://developer.chrome.com/docs/ai/proofreader-api> |
+| Translator | <https://developer.chrome.com/docs/ai/translator-api> |
+| Language Detector | <https://developer.chrome.com/docs/ai/language-detection> |
 
 ## Cross-origin iframes
 
-Each API needs its own permission-policy token on the embedder's `allow` attribute:
+To use built-in AI inside a cross-origin iframe, the embedder grants each API with its own permission-policy token on the `allow` attribute:
 
 ```html
 <iframe allow="language-model; summarizer; writer; rewriter; proofreader; translator; language-detector"></iframe>
 ```
 
+| API | `allow` token |
+| --- | --- |
+| LanguageModel | `language-model` |
+| Summarizer | `summarizer` |
+| Writer | `writer` |
+| Rewriter | `rewriter` |
+| Proofreader | `proofreader` |
+| Translator | `translator` |
+| Language Detector | `language-detector` |
+
 Use only the tokens for the APIs you embed.
 
----
+## Verifying against a real model
 
-## Real-Chrome verification checklist
+Unit tests run against mocked globals. To confirm the real model path, run a demo (`pnpm dev:react`) in a Chrome that has built-in AI enabled, and check:
 
-Unit tests cover the logic against mocked globals. Run these once against a flag-enabled
-Chrome to confirm the real model path. Easiest harness: a throwaway Vite + React app.
-
-```bash
-# from a fresh app that has use-chrome-ai installed (or `npm pack` this repo and install the tarball)
-npm create vite@latest nano-smoke -- --template react-ts
-cd nano-smoke && npm i && npm i ../use-chrome-ai/use-chrome-ai-0.1.0.tgz
-# drop the README chatbot into src/App.tsx, then `npm run dev`
-```
-
-Then verify, in a flag-enabled Chrome:
-
-- [ ] **Capability gate** — with built-in AI *disabled*, the app renders the `isUnavailable`
-      fallback and does **not** throw. (Try it in Firefox too.)
-- [ ] **Download flow** — on first use with `availability: "downloadable"`, clicking the
-      action shows a progress bar (`downloadProgress` advancing 0→1), then becomes ready.
-- [ ] **Activation guard** — calling an action *not* from a click (e.g. in a `useEffect`)
-      while `downloadable` throws `ActivationRequiredError` rather than hanging.
-- [ ] **Streaming** — the chatbot reply streams in token-by-token; `stop()` halts it mid-stream.
-- [ ] **Multi-turn memory** — a second message references the first (one session, context kept).
-- [ ] **Context full** — a very long conversation eventually surfaces `ContextFullError`;
-      `reset()` recovers.
-- [ ] **Each API** — `useSummarizer`, `useWriter`, `useRewriter`, `useTranslator`,
-      `useProofreader`, `useLanguageDetector` each produce sane output for a sample input.
-- [ ] **Extension context** — import the core in a side panel / content script of an MV3
-      extension and confirm it streams there too (no `chrome.*` needed).
-- [ ] **Footprint** — a core-only import (no React) bundles without pulling React, and the
-      used-API surface gzips within budget.
+- [ ] **Capability gate** — with built-in AI disabled (or in another browser), the app renders the `isUnavailable` fallback and does **not** throw.
+- [ ] **Download flow** — on first use with `availability: "downloadable"`, clicking the action shows progress (`downloadProgress` 0→1), then becomes ready.
+- [ ] **Activation guard** — calling an action *not* from a click (e.g. in an effect) while `downloadable` throws `ActivationRequiredError` rather than hanging.
+- [ ] **Streaming** — the reply streams in token-by-token; `stop()` halts it mid-stream.
+- [ ] **Multi-turn memory** — a second chat message references the first (one session, context kept).
+- [ ] **Context full** — a very long conversation eventually surfaces `ContextFullError`; `reset()` recovers.
+- [ ] **Each API** — `useSummarizer`, `useWriter`, `useRewriter`, `useTranslator`, `useProofreader`, `useLanguageDetector` each produce sane output for a sample input.
 
 > Edge ships the same globals backed by Phi-4-mini — feature detection covers it; no special-casing.

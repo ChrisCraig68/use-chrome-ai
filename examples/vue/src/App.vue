@@ -67,6 +67,6 @@ function onSubmit() {
       </template>
     </div>
 
-    <p style="margin-top: 24px"><a href="/">← Back to the React demos</a></p>
+    <p style="margin-top: 24px"><a href="../">← Back to the React demos</a></p>
   </div>
 </template>

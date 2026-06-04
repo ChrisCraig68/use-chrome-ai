@@ -9,7 +9,9 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "dev:examples": "pnpm --filter @use-chrome-ai/examples dev",
+    "dev:react": "pnpm --filter @use-chrome-ai/example-react dev",
+    "dev:vue": "pnpm --filter @use-chrome-ai/example-vue dev",
+    "build:demos": "rm -rf examples/dist && pnpm --filter @use-chrome-ai/example-react build && pnpm --filter @use-chrome-ai/example-vue build",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish"

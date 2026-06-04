@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Guidance for AI coding agents (and humans) working in this repo. For using the library in
-*your own* project, see [`llms.txt`](./llms.txt) and [`docs/api-reference.md`](./docs/api-reference.md).
+*your own* project, see [`llms.txt`](./llms.txt) and the per-package READMEs.
 
 ## What this is
 
@@ -12,18 +12,24 @@ AI (Gemini Nano). Logic only — no UI components.
 packages/core    → "use-chrome-ai"          zero-dependency, framework-agnostic core
 packages/react   → "@use-chrome-ai/react"   React hooks (peer: react; dep: use-chrome-ai)
 packages/vue     → "@use-chrome-ai/vue"     Vue composables (peer: vue; dep: use-chrome-ai)
-examples/        → Vite playground (React demos + a Vue demo), imports packages from source
-docs/            → reference, recipes, design notes, enabling built-in AI
+examples/react   → standalone Vite + React demo app (imports packages from source)
+examples/vue     → standalone Vite + Vue demo app (imports packages from source)
+docs/            → API reference, design notes, enabling built-in AI
 ```
+
+Each package has its own `README.md` (the public quick start). The root `README.md` is the
+light overview that links to them.
 
 ## Commands
 
 ```bash
 pnpm install            # install the workspace
-pnpm -r typecheck       # tsc --noEmit in every package
+pnpm -r typecheck       # tsc --noEmit in every package (examples have no typecheck script)
 pnpm -r test            # vitest (mocked AI globals — no real model needed)
-pnpm -r build           # tsup → dist (topological: core first)
-pnpm dev:examples       # Vite playground at http://localhost:5173 (Vue demo at /vue.html)
+pnpm -r build           # tsup → dist for packages; vite build for the demo apps
+pnpm dev:react          # React demo app  → http://localhost:5173
+pnpm dev:vue            # Vue demo app    → http://localhost:5174
+pnpm build:demos        # build both demos into examples/dist (React at /, Vue at /vue/)
 pnpm changeset          # record a change for the next release
 ```
 
@@ -43,13 +49,17 @@ per [`docs/enabling-built-in-ai.md`](./docs/enabling-built-in-ai.md).
 
 ## Conventions & invariants (don't break these)
 
-- **Core must stay zero-dependency and `chrome.*`-free.** It reads only `globalThis.*` AI globals,
-  lazily, inside functions (never at module top level). This keeps it usable in web pages AND
-  extension contexts, and keeps `sideEffects:false` honest.
+- **Core must stay zero-dependency.** It reads only the AI globals on `globalThis`, lazily, inside
+  functions (never at module top level) — no other global/host coupling. This keeps it usable in
+  any document context and keeps `sideEffects:false` honest.
 - **`getSnapshot()` must return the same frozen object until a real change** — a fresh object each
   call makes `useSyncExternalStore` infinite-loop. State is replaced wholesale in `update()`.
+- **Two orthogonal axes.** `availability` ("can this run here") and `phase` ("what is it doing now")
+  are independent; never collapse them.
+- **In-flight create dedup.** Concurrent `warm()`/`download()` calls share one `create()` (one download).
 - **`AbortError` is control flow, not failure.** Never `invalidate()` on it (use `isAbortError`).
-  Any *other* session-method failure calls `invalidate()` (Chrome can evict the model mid-session).
+  Any *other* session-method failure calls `invalidate()` (Chrome can evict the model mid-session)
+  → destroy the dead handle + re-check availability.
 - **Downloads need a user gesture.** `warm()` throws `ActivationRequiredError` when a download is
   required and `navigator.userActivation.isActive` is false. Don't auto-download from effects.
 - **Hooks never reject** (they set `error`); **core `create*` functions DO reject** (imperative control).
@@ -58,11 +68,10 @@ per [`docs/enabling-built-in-ai.md`](./docs/enabling-built-in-ai.md).
 - **Per-API language-hint shapes genuinely differ** (LanguageModel `expectedInputs/expectedOutputs`
   vs task APIs `expectedInputLanguages/outputLanguage` vs Translator `sourceLanguage/targetLanguage`).
   Each factory owns its shape; don't unify them.
-- Match the existing comment density and naming. The patterns are ported from the Nib extension;
-  prefer porting proven behavior over inventing.
+- Match the existing comment density and naming. Prefer preserving proven behavior over inventing.
 
 ## Releasing
 
 Independently versioned via changesets. `pnpm changeset` → commit → on merge to `main` the
 release workflow opens a "Version Packages" PR; merging it publishes. Requires an `NPM_TOKEN`
-secret and the `@use-chrome-ai` npm org.
+secret and the `@use-chrome-ai` npm org. The example apps are `private` and never publish.

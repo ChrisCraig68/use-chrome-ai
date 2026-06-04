@@ -1,5 +1,5 @@
-// use-chrome-ai — framework-agnostic core. Zero dependencies. Import this anywhere
-// (including inside a Chrome extension). React hooks live at "use-chrome-ai/react".
+// use-chrome-ai — framework-agnostic core. Zero dependencies. Import this in any web page
+// or framework. React hooks: "@use-chrome-ai/react". Vue composables: "@use-chrome-ai/vue".
 
 // Status & errors
 export type { Availability, ControllerState, Phase, Store } from "./types";

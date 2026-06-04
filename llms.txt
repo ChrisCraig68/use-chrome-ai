@@ -2,22 +2,24 @@
 
 > Headless, framework-agnostic primitives + React hooks + Vue composables for Chrome's built-in AI (Gemini Nano, and Edge's Phi-4-mini). Runs on-device — no API keys, no server, nothing leaves the browser. Covers all seven APIs: Prompt/LanguageModel, Summarizer, Writer, Rewriter, Proofreader, Translator, Language Detector. Streaming, model-download progress, user-activation gating, and mid-session eviction recovery are handled for you. The library ships logic only — you build the UI.
 
-Install: `npm i @use-chrome-ai/react` (React) · `npm i use-chrome-ai` (vanilla / Chrome extension) · `npm i @use-chrome-ai/vue` (Vue). Each adapter depends on and re-exports the core, so you can import the hooks and the `create*`/`isSupported` helpers from one place.
+Install: `npm i @use-chrome-ai/react` (React) · `npm i use-chrome-ai` (vanilla JS) · `npm i @use-chrome-ai/vue` (Vue). Each adapter depends on and re-exports the core, so you can import the hooks and the `create*`/`isSupported` helpers from one place.
 
 Things an assistant should know before writing code with this library:
 
-- **Progressive enhancement, never throws on unsupported browsers.** Built-in AI is GA only inside Chrome/Edge extensions; in a normal web page it's flag/origin-trial gated, desktop-Chromium only, and needs ~22 GB free disk + >4 GB VRAM. Every hook exposes `isUnavailable` / `availability`; gate your UI on it and render a fallback.
+- **Progressive enhancement, never throws on unsupported browsers.** Built-in AI is desktop Chrome/Edge only, partly behind flags/origin trials, with real disk/VRAM requirements. Every hook exposes `isUnavailable` / `availability`; gate your UI on it and render a fallback.
 - **First use downloads a multi-GB model and Chrome requires a user gesture to start it.** When `availability === 'downloadable'`, render a button and call `download()` from its click handler, or call the action directly from a click. Calling an action with no gesture while downloadable throws `ActivationRequiredError`.
 - **Streaming** resolves into `result` (task hooks: `useSummarizer`/`useWriter`/`useRewriter`/`useTranslator`/`usePrompt`) or `messages` (`useChat`). Abort with `stop()`. Hooks never reject — read `error`. Core functions (`create*`) DO reject, for imperative control.
 - **`availability`** is `'unavailable' | 'downloadable' | 'downloading' | 'available'`. **`phase`** (`'idle' | 'creating' | 'running' | 'streaming' | 'error'`) is what the controller is doing right now.
 
 ## Docs
 
-- [README](./README.md): overview, the one-hook chatbot, per-API examples, hard constraints.
+- [README](./README.md): overview, the one-hook chatbot, the seven APIs, the demos.
+- [Core quick start](./packages/core/README.md): vanilla JS — `createChat` + the `create*` factories.
+- [React quick start](./packages/react/README.md): the hooks.
+- [Vue quick start](./packages/vue/README.md): the composables.
 - [API reference](./docs/api-reference.md): every hook, core factory, and type with signatures.
-- [Recipes](./docs/recipes.md): copy-paste snippets for the common tasks.
-- [Enabling built-in AI](./docs/enabling-built-in-ai.md): flags, hardware, the 7 iframe permission tokens, and a real-Chrome verification checklist.
-- [Design notes](./docs/DESIGN.md): architecture and the framework-agnostic `SessionLifecycle` seam.
+- [Enabling built-in AI](./docs/enabling-built-in-ai.md): links to Google's setup docs, the iframe permission tokens, and a verify checklist.
+- [Design notes](./docs/DESIGN.md): how the framework-agnostic core is shaped.
 
 ## Packages
 
