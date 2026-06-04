@@ -171,7 +171,7 @@ export function SmartTooltip() {
                   flexWrap: "wrap",
                   marginTop: 12,
                   paddingTop: 10,
-                  borderTop: "1px solid var(--line)",
+                  borderTop: "1px solid hsl(var(--border))",
                 }}
               >
                 <button
