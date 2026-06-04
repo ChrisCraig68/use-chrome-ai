@@ -5,6 +5,14 @@
   "type": "module",
   "description": "Monorepo for use-chrome-ai: headless on-device AI primitives + framework adapters for Chrome's built-in AI.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChrisCraig68/use-chrome-ai"
+  },
+  "bugs": {
+    "url": "https://github.com/ChrisCraig68/use-chrome-ai/issues"
+  },
+  "homepage": "https://github.com/ChrisCraig68/use-chrome-ai#readme",
   "scripts": {
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",

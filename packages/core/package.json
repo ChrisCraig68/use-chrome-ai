@@ -3,6 +3,15 @@
   "version": "0.0.0",
   "description": "Headless, framework-agnostic primitives for Chrome's built-in AI (Gemini Nano): Prompt, Summarizer, Writer, Rewriter, Proofreader, Translator, Language Detector. Zero dependencies.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChrisCraig68/use-chrome-ai",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/ChrisCraig68/use-chrome-ai/issues"
+  },
+  "homepage": "https://github.com/ChrisCraig68/use-chrome-ai#readme",
   "type": "module",
   "sideEffects": false,
   "keywords": [
