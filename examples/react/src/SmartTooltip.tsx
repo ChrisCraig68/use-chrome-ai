@@ -4,9 +4,9 @@ import { type CSSProperties, useCallback, useEffect, useRef, useState } from "re
 /**
  * Smart tooltip: highlight any text in the passage and a popover appears next to the
  * selection. It explains the selection on-device immediately — no extra click — and
- * streams the answer inline. Retry re-runs the current action; Simplify and Key points
- * swap to a different prompt on the same selection. One `usePrompt` hook + a little
- * selection/positioning glue — no UI library.
+ * streams the answer inline. Explain / Simplify / Key points each (re)run on the current
+ * selection and highlight the active one; ↻ re-runs whichever is active. One `usePrompt`
+ * hook + a little selection/positioning glue — no UI library.
  */
 
 interface Selection {
@@ -51,6 +51,8 @@ export function SmartTooltip() {
   const [active, setActive] = useState<string>(DEFAULT_ACTION.label);
   const passageRef = useRef<HTMLParagraphElement>(null);
   const autoRanFor = useRef<Selection | null>(null);
+  // Bumped on each new selection so the popover remounts and replays its open animation.
+  const [openId, setOpenId] = useState(0);
 
   const onMouseUp = useCallback(() => {
     const sel = window.getSelection();
@@ -66,6 +68,7 @@ export function SmartTooltip() {
     // the previous selection never lingers, then let the effect below auto-run Explain.
     stop();
     setSelection({ text, rect: range.getBoundingClientRect() });
+    setOpenId((n) => n + 1);
   }, [stop]);
 
   const runAction = useCallback(
@@ -107,6 +110,7 @@ export function SmartTooltip() {
 
       {selection && (
         <div
+          key={openId}
           className="popover"
           style={popoverPosition(selection.rect)}
           onMouseDown={(e) => e.preventDefault()}
@@ -150,38 +154,42 @@ export function SmartTooltip() {
                 </div>
               )}
 
-              <div
-                style={{
-                  fontSize: 15,
-                  lineHeight: 1.55,
-                  whiteSpace: "pre-wrap",
-                  maxHeight: "40vh",
-                  overflow: "auto",
-                }}
-              >
-                {result}
-                {isStreaming && <span className="blink">▋</span>}
-              </div>
+              {(result || isStreaming) && (
+                <div
+                  style={{
+                    fontSize: 15,
+                    lineHeight: 1.55,
+                    whiteSpace: "pre-wrap",
+                    maxHeight: "40vh",
+                    overflow: "auto",
+                  }}
+                >
+                  {result}
+                  {isStreaming && <span className="blink">▋</span>}
+                </div>
+              )}
 
               <div
                 style={{
                   display: "flex",
                   gap: 8,
                   flexWrap: "wrap",
-                  marginTop: 12,
-                  paddingTop: 10,
-                  borderTop: "1px solid hsl(var(--border))",
+                  marginTop: result || isStreaming ? 12 : 0,
+                  paddingTop: result || isStreaming ? 10 : 0,
+                  borderTop: result || isStreaming ? "1px solid hsl(var(--border))" : "none",
                 }}
               >
                 <button
                   type="button"
                   className="btn btn-sm"
+                  title="Regenerate"
+                  aria-label="Regenerate"
                   disabled={isStreaming || !model.isReady}
                   onClick={() => runAction(active, selection.text)}
                 >
-                  ↻ Retry
+                  ↻
                 </button>
-                {ALT_ACTIONS.map((a) => (
+                {ALL_ACTIONS.map((a) => (
                   <button
                     key={a.label}
                     type="button"

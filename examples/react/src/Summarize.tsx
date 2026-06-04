@@ -21,7 +21,7 @@ export function Summarize() {
 
   if (model.isUnavailable) {
     return (
-      <div className="card">
+      <div className="panel">
         <p className="error" style={{ margin: 0 }}>
           The Summarizer API isn't available in this browser.
         </p>
@@ -30,7 +30,7 @@ export function Summarize() {
   }
 
   return (
-    <div className="card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div className="panel" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <textarea className="field" value={text} onChange={(e) => setText(e.target.value)} rows={6} />
 
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
