@@ -9,7 +9,7 @@ export function Chat() {
 
   if (model.isUnavailable) {
     return (
-      <div className="card">
+      <div className="panel">
         <p className="muted" style={{ margin: 0 }}>
           On-device AI isn't available in this browser. Try desktop Chrome 138+.
         </p>
@@ -18,7 +18,7 @@ export function Chat() {
   }
 
   return (
-    <div className="card">
+    <div className="panel">
       {!model.isChecking && model.availability === "downloadable" && (
         <button
           type="button"

@@ -23,7 +23,7 @@ function onSubmit() {
     </header>
     <p class="lede">Same core as the React demos, bound with a Vue composable.</p>
 
-    <div class="card" style="margin-top: 22px">
+    <div class="panel" style="margin-top: 22px">
       <p v-if="model.isUnavailable" class="muted" style="margin: 0">
         On-device AI isn't available in this browser.
       </p>

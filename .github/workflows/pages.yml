@@ -32,6 +32,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # The demos consume the workspace packages (workspace:*), so build those first.
+      - run: pnpm --filter "./packages/*" build
+
       - run: pnpm build:demos
 
       - uses: actions/configure-pages@v5

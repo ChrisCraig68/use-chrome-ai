@@ -8,6 +8,10 @@ library handles the wrapper work: availability state, download progress, streami
 aborts, and session recovery. For Chrome setup, API status, and model behavior, use the
 [Chrome built-in AI docs](https://developer.chrome.com/docs/ai/built-in).
 
+> **▶ Live demos** — [React: Smart Tooltip · Chat · Summarizer](https://chriscraig68.github.io/use-chrome-ai/)
+> and the [Vue chat](https://chriscraig68.github.io/use-chrome-ai/vue/). They run entirely
+> on-device — open in desktop Chrome with built-in AI enabled.
+
 ## Motivation
 
 I started this while experimenting with Chrome's built-in AI and wanting the native APIs
