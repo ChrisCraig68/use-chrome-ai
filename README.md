@@ -113,17 +113,6 @@ pnpm dev:vue      # Vue demo     → http://localhost:5174
 
 Run them in desktop Chrome with built-in AI enabled to see the model path; in any other browser they render the `unavailable` fallback.
 
-### Hosting on GitHub Pages
-
-`pnpm build:demos` builds both into `examples/dist/` (React at `/`, Vue at `/vue/`), with the Vite `base` set to `/use-chrome-ai/`. To publish:
-
-```bash
-pnpm build:demos
-npx gh-pages -d examples/dist        # pushes to the gh-pages branch
-```
-
-Then set **Settings → Pages → Source** to the `gh-pages` branch. The site serves at `https://<user>.github.io/use-chrome-ai/`. (Built-in AI is gated, so most visitors will see the `unavailable` fallback unless they've enabled it in Chrome.)
-
 ---
 
 ## Documentation
