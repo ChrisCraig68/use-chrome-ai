@@ -8,6 +8,15 @@ library handles the wrapper work: availability state, download progress, streami
 aborts, and session recovery. For Chrome setup, API status, and model behavior, use the
 [Chrome built-in AI docs](https://developer.chrome.com/docs/ai/built-in).
 
+## Motivation
+
+I started this while experimenting with Chrome's built-in AI and wanting the native APIs
+wrapped in something easy to reuse.
+
+It is useful for prototyping LLM features in your app without picking a vendor, signing
+up for an API key, or adopting a complex AI framework. The local model's small context
+window limits some use cases, but it is surprisingly capable at simple tasks.
+
 ```bash
 npm i use-chrome-ai
 npm i @use-chrome-ai/react
