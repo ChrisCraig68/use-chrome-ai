@@ -19,9 +19,7 @@ function onSubmit() {
 <template>
   <div class="app" style="max-width: 600px">
     <header class="brand">
-      <span class="dot" />
       <h1>@use-chrome-ai/vue</h1>
-      <span class="badge">on-device</span>
     </header>
     <p class="lede">Same core as the React demos, bound with a Vue composable.</p>
 
@@ -32,9 +30,10 @@ function onSubmit() {
 
       <template v-else>
         <button
-          v-if="model.availability === 'downloadable'"
+          v-if="!model.isChecking && model.availability === 'downloadable'"
           type="button"
           class="btn btn-primary"
+          style="margin-bottom: 12px"
           @click="model.download()"
         >
           Enable on-device AI
@@ -43,41 +42,48 @@ function onSubmit() {
           Downloading model… <progress :value="model.progress" max="1" />
         </div>
 
-        <div class="thread">
-          <div v-if="messages.length === 0" class="empty">
-            Ask anything — it runs entirely on your device.
-          </div>
-          <div v-for="(m, i) in messages" :key="i" class="row" :class="m.role">
-            <div class="avatar" :class="m.role === 'user' ? 'me' : 'ai'">
-              {{ m.role === "user" ? "Me" : "AI" }}
+        <div class="chat-window">
+          <div class="thread">
+            <div v-if="messages.length === 0" class="empty">
+              Ask anything — it runs entirely on your device.
             </div>
-            <div class="bubble" :class="m.role">
-              <template v-if="m.content">{{ m.content }}</template>
-              <span v-else-if="isStreaming && i === messages.length - 1" class="blink">▋</span>
+            <div v-for="(m, i) in messages" :key="i" class="row" :class="m.role">
+              <div class="avatar" :class="m.role === 'user' ? 'me' : 'ai'">
+                {{ m.role === "user" ? "Me" : "AI" }}
+              </div>
+              <div class="bubble" :class="m.role">
+                <template v-if="m.content">{{ m.content }}</template>
+                <span v-else-if="isStreaming && i === messages.length - 1" class="blink">▋</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <form class="composer" @submit.prevent="onSubmit">
-          <input
-            v-model="input"
-            class="field"
-            :disabled="isStreaming || !model.isReady"
-            placeholder="Ask something…"
-          />
-          <button v-if="isStreaming" type="button" class="btn" @click="stop">Stop</button>
-          <button
-            v-else
-            type="submit"
-            class="btn btn-primary"
-            :disabled="!input.trim() || !model.isReady"
-          >
-            Send
-          </button>
-          <button v-if="messages.length > 0 && !isStreaming" type="button" class="btn" @click="reset">
-            Reset
-          </button>
-        </form>
+          <form class="composer" @submit.prevent="onSubmit">
+            <input
+              v-model="input"
+              class="field"
+              :disabled="isStreaming || !model.isReady"
+              placeholder="Ask something…"
+            />
+            <button v-if="isStreaming" type="button" class="btn" @click="stop">Stop</button>
+            <button
+              v-else
+              type="submit"
+              class="btn btn-primary"
+              :disabled="!input.trim() || !model.isReady"
+            >
+              Send
+            </button>
+            <button
+              v-if="messages.length > 0 && !isStreaming"
+              type="button"
+              class="btn"
+              @click="reset"
+            >
+              Reset
+            </button>
+          </form>
+        </div>
       </template>
     </div>
 

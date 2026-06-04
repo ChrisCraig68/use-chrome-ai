@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getGlobal } from "../src/availability";
 import { type AiCtor, SessionLifecycle } from "../src/lifecycle";
-import { ActivationRequiredError, UnavailableError } from "../src/types";
+import { ActivationRequiredError, deriveModelStatus, UnavailableError } from "../src/types";
 import { captureStates, installGlobal, makeFakeApi, setUserActivation } from "./helpers";
 
 interface S {
@@ -43,6 +43,25 @@ describe("SessionLifecycle", () => {
     expect(s1).toBe(life.getServerSnapshot());
     expect(s1.supported).toBe(false);
     expect(s1.availability).toBe("unavailable");
+  });
+
+  it("tracks whether availability has been checked yet (no premature download CTA)", async () => {
+    const api = makeFakeApi({ availability: "available" });
+    const life = lifecycleFor(api);
+
+    // Before refresh: availability is an optimistic guess and `checked` is false, so a UI
+    // can show a neutral "checking" state instead of a download CTA.
+    const before = life.getSnapshot();
+    expect(before.checked).toBe(false);
+    expect(deriveModelStatus(before, () => Promise.resolve()).isChecking).toBe(true);
+
+    await life.refresh();
+
+    // After refresh: settled on the real availability; isChecking clears.
+    const after = life.getSnapshot();
+    expect(after.checked).toBe(true);
+    expect(after.availability).toBe("available");
+    expect(deriveModelStatus(after, () => Promise.resolve()).isChecking).toBe(false);
   });
 
   it("dedups concurrent warm() into a single create()", async () => {

@@ -47,6 +47,7 @@ export interface TaskController<TParams> extends BaseController {
 
 const SERVER_STATE: ControllerState = Object.freeze({
   supported: false,
+  checked: true,
   availability: "unavailable" as const,
   phase: "idle" as const,
   downloadProgress: 0,
@@ -82,6 +83,9 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
     const supported = config.getCtor() !== undefined;
     this.state = Object.freeze({
       supported,
+      // Optimistic until refresh() runs the real availability() check; `checked` stays
+      // false so UIs can show a neutral state instead of a premature download CTA.
+      checked: false,
       availability: supported ? "downloadable" : "unavailable",
       phase: "idle",
       downloadProgress: 0,
@@ -128,24 +132,25 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
     const Ctor = this.config.getCtor();
     if (!Ctor) {
       this.checked = true;
-      this.update({ supported: false, availability: "unavailable" });
+      this.update({ supported: false, checked: true, availability: "unavailable" });
       return "unavailable";
     }
     if (!Ctor.availability) {
       // Some APIs may not expose availability(); assume downloadable and let create() decide.
       this.checked = true;
-      this.update({ supported: true });
+      this.update({ supported: true, checked: true });
       return this.state.availability;
     }
     try {
       const raw = await Ctor.availability(this.config.availabilityOptions?.());
       const availability = normalizeAvailability(String(raw));
       this.checked = true;
-      this.update({ supported: true, availability, error: null });
+      this.update({ supported: true, checked: true, availability, error: null });
       return availability;
     } catch (err) {
       this.checked = true;
       this.update({
+        checked: true,
         availability: "unavailable",
         error: err instanceof Error ? err : new Error(String(err)),
       });

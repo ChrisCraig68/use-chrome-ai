@@ -44,7 +44,7 @@ export function Summarize() {
           <option value="tldr">TL;DR</option>
         </select>
 
-        {model.availability === "downloadable" ? (
+        {!model.isChecking && model.availability === "downloadable" ? (
           <button type="button" className="btn btn-primary" onClick={() => model.download()}>
             Enable on-device AI
           </button>

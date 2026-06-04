@@ -20,9 +20,7 @@ export function App() {
   return (
     <div className="app">
       <header className="brand">
-        <span className="dot" />
         <h1>use-chrome-ai</h1>
-        <span className="badge">on-device</span>
       </header>
       <p className="lede">
         Headless primitives for Chrome's built-in AI. These demos use the React hooks — the same
