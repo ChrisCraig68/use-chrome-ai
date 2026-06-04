@@ -1,12 +1,22 @@
 import {
   type ChatMessage,
   type ChatOptions,
-  type ControllerState,
   createChat,
+  deriveModelStatus,
   isAbortError,
+  type ModelStatus,
   type Store,
 } from "use-chrome-ai";
-import { type DeepReadonly, onScopeDispose, readonly, ref, type Ref, shallowRef } from "vue";
+import {
+  type ComputedRef,
+  computed,
+  type DeepReadonly,
+  onScopeDispose,
+  type Ref,
+  readonly,
+  ref,
+  shallowRef,
+} from "vue";
 
 /**
  * Bind any controller's status to a Vue ref — the framework-agnostic seam, Vue edition.
@@ -24,10 +34,11 @@ export function useModelStatus<S>(store: Store<S>): DeepReadonly<Ref<S>> {
 }
 
 export interface UseChatReturn {
-  status: DeepReadonly<Ref<ControllerState>>;
+  /** Model availability, download progress, readiness booleans, and `download()`. */
+  model: ComputedRef<ModelStatus>;
   messages: Ref<ChatMessage[]>;
   isStreaming: Ref<boolean>;
-  error: Ref<Error | null>;
+  error: ComputedRef<Error | null>;
   /** Send a message; streams the reply into `messages`. Never rejects — see `error`. */
   send: (text: string) => Promise<void>;
   stop: () => void;
@@ -38,9 +49,14 @@ export interface UseChatReturn {
 export function useChat(options: ChatOptions = {}): UseChatReturn {
   const chat = createChat(options);
   const status = useModelStatus(chat);
+  const download = () => chat.download();
+  const model = computed(() => deriveModelStatus(status.value, download));
   const messages = shallowRef<ChatMessage[]>(chat.messages.slice());
   const isStreaming = ref(false);
   const error = ref<Error | null>(null);
+  // Surface the latest async error, falling back to a controller-level error (e.g. a failed
+  // availability check) — mirrors the React hooks' `error ?? model.status.error`.
+  const exposedError = computed<Error | null>(() => error.value ?? status.value.error);
   let ac: AbortController | null = null;
 
   async function send(text: string): Promise<void> {
@@ -78,7 +94,7 @@ export function useChat(options: ChatOptions = {}): UseChatReturn {
     chat.destroy();
   });
 
-  return { status, messages, isStreaming, error, send, stop, reset };
+  return { model, messages, isStreaming, error: exposedError, send, stop, reset };
 }
 
 // Re-export the framework-agnostic core for convenience.

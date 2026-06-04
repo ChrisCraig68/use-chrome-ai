@@ -3,7 +3,10 @@ import { createTaskController } from "./task";
 
 interface RewriterSession {
   rewrite(text: string, opts?: { context?: string; signal?: AbortSignal }): Promise<string>;
-  rewriteStreaming(text: string, opts?: { context?: string; signal?: AbortSignal }): ReadableStream<string>;
+  rewriteStreaming(
+    text: string,
+    opts?: { context?: string; signal?: AbortSignal },
+  ): ReadableStream<string>;
   destroy?(): void;
 }
 
@@ -40,7 +43,10 @@ export function createRewriter(options: RewriterOptions = {}): TaskController<Re
     }),
     availabilityOptions: hints,
     run: (s, p, signal) =>
-      s.rewrite(p.text, { ...(p.context ? { context: p.context } : {}), ...(signal ? { signal } : {}) }),
+      s.rewrite(p.text, {
+        ...(p.context ? { context: p.context } : {}),
+        ...(signal ? { signal } : {}),
+      }),
     stream: (s, p, o) =>
       s.rewriteStreaming(p.text, { ...(p.context ? { context: p.context } : {}), ...o }),
   });

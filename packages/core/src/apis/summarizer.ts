@@ -3,7 +3,10 @@ import { createTaskController } from "./task";
 
 interface SummarizerSession {
   summarize(text: string, opts?: { context?: string; signal?: AbortSignal }): Promise<string>;
-  summarizeStreaming(text: string, opts?: { context?: string; signal?: AbortSignal }): ReadableStream<string>;
+  summarizeStreaming(
+    text: string,
+    opts?: { context?: string; signal?: AbortSignal },
+  ): ReadableStream<string>;
   destroy?(): void;
 }
 
@@ -40,7 +43,10 @@ export function createSummarizer(options: SummarizerOptions = {}): TaskControlle
     }),
     availabilityOptions: hints,
     run: (s, p, signal) =>
-      s.summarize(p.text, { ...(p.context ? { context: p.context } : {}), ...(signal ? { signal } : {}) }),
+      s.summarize(p.text, {
+        ...(p.context ? { context: p.context } : {}),
+        ...(signal ? { signal } : {}),
+      }),
     stream: (s, p, o) =>
       s.summarizeStreaming(p.text, { ...(p.context ? { context: p.context } : {}), ...o }),
   });

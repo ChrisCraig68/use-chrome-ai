@@ -12,10 +12,10 @@ afterEach(() => {
 });
 
 function ChatProbe() {
-  const { messages, send, isUnavailable } = useChat({ system: "sys" });
+  const { messages, send, model } = useChat({ system: "sys" });
   return (
     <div>
-      <span data-testid="unavailable">{String(isUnavailable)}</span>
+      <span data-testid="unavailable">{String(model.isUnavailable)}</span>
       <button type="button" onClick={() => send("hi")}>
         send
       </button>

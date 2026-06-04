@@ -18,7 +18,10 @@ export interface PromptHook extends AiStatus {
  * `createLanguageModel().prompt(input, { responseConstraint })`.
  */
 export function usePrompt(options: LanguageModelOptions = {}): PromptHook {
-  const controller = useController(() => createLanguageModel(options), optionsKey("prompt", options));
+  const controller = useController(
+    () => createLanguageModel(options),
+    optionsKey("prompt", options),
+  );
   const base = useAiStatus(controller);
   const [result, setResult] = useState("");
   const [isStreaming, setStreaming] = useState(false);
@@ -53,5 +56,5 @@ export function usePrompt(options: LanguageModelOptions = {}): PromptHook {
     [controller],
   );
 
-  return { ...base, result, isStreaming, error: error ?? base.status.error, stop, prompt };
+  return { ...base, result, isStreaming, error: error ?? base.model.status.error, stop, prompt };
 }

@@ -1,9 +1,9 @@
-import { getGlobal } from "./availability";
 import {
   buildLanguageModelHints,
   type LanguageModelOptions,
   type LanguageModelSession,
 } from "./apis/languageModel";
+import { getGlobal } from "./availability";
 import { type AiCtor, type BaseController, SessionLifecycle, store } from "./lifecycle";
 import { drainStream, isAbortError } from "./stream";
 import { ContextFullError } from "./types";

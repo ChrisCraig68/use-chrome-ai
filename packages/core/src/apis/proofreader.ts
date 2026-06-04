@@ -1,5 +1,5 @@
 import { getGlobal } from "../availability";
-import { type AiCtor, type BaseController, SessionLifecycle, runCall, store } from "../lifecycle";
+import { type AiCtor, type BaseController, runCall, SessionLifecycle, store } from "../lifecycle";
 
 /** The current spec field is `types` (a list of {@link CorrectionType}), present only
  *  when `includeCorrectionTypes` is enabled — which the current origin trial does NOT
@@ -88,7 +88,9 @@ export function createProofreader(options: ProofreaderOptions = {}): Proofreader
         ? { correctionExplanationLanguage: options.correctionExplanationLanguage }
         : {}),
     }),
-    availabilityOptions: () => ({ expectedInputLanguages: options.expectedInputLanguages ?? ["en"] }),
+    availabilityOptions: () => ({
+      expectedInputLanguages: options.expectedInputLanguages ?? ["en"],
+    }),
   });
 
   // The on-device proofreader processes one proofread() at a time; overlapping calls

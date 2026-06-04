@@ -9,6 +9,10 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "dev:react": "pnpm --filter @use-chrome-ai/example-react dev",
     "dev:vue": "pnpm --filter @use-chrome-ai/example-vue dev",
     "build:demos": "rm -rf examples/dist && pnpm --filter @use-chrome-ai/example-react build && pnpm --filter @use-chrome-ai/example-vue build",
@@ -17,9 +21,12 @@
     "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
     "@changesets/cli": "^2.27.0",
     "typescript": "^5.7.0"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "packageManager": "pnpm@9.10.0"
 }

@@ -5,8 +5,19 @@
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
-  "keywords": ["chrome", "ai", "gemini-nano", "built-in-ai", "react", "hooks", "on-device", "llm"],
-  "files": ["dist"],
+  "keywords": [
+    "chrome",
+    "ai",
+    "gemini-nano",
+    "built-in-ai",
+    "react",
+    "hooks",
+    "on-device",
+    "llm"
+  ],
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -40,5 +51,7 @@
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }

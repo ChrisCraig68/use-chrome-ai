@@ -50,5 +50,5 @@ export function useLanguageDetector(options: LanguageDetectorOptions = {}): Lang
     [controller],
   );
 
-  return { ...base, result, isPending, error: error ?? base.status.error, detect };
+  return { ...base, result, isPending, error: error ?? base.model.status.error, detect };
 }

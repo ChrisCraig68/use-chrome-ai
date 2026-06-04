@@ -11,7 +11,8 @@ import { createChat, isSupported } from "use-chrome-ai";
 
 if (isSupported()) {
   const chat = createChat({ system: "You are a helpful assistant." });
-  // Call from a click handler so the first run can download the model.
+  // Download the model once from a click (Chrome needs a gesture); send() never auto-downloads.
+  await chat.download();
   for await (const delta of chat.send("Hello!")) {
     output.textContent += delta; // stream deltas into the DOM
   }

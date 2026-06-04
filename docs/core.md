@@ -8,7 +8,7 @@ The React and Vue adapters ([`@use-chrome-ai/react`](./react.md), [`@use-chrome-
 npm i use-chrome-ai
 ```
 
-> Built-in AI is desktop Chrome/Edge only and partly behind flags/origin trials — see [Get started with built-in AI](https://developer.chrome.com/docs/ai/get-started). Feature-detect with `isSupported()` and render a fallback when it's missing.
+> Built-in AI is desktop Chrome only and partly behind flags/origin trials — see [Get started with built-in AI](https://developer.chrome.com/docs/ai/get-started). Feature-detect with `isSupported()` and render a fallback when it's missing.
 
 ## Streaming chat
 
@@ -18,7 +18,10 @@ import { createChat, isSupported } from "use-chrome-ai";
 if (isSupported()) {
   const chat = createChat({ system: "You are a helpful assistant." });
 
-  // Call from a click handler so the first run can download the model.
+  // One-time: download the model from a click (Chrome requires a user gesture).
+  await chat.download();
+
+  // Then stream replies — a normal send() never triggers a download:
   for await (const delta of chat.send("Hello!")) {
     output.textContent += delta; // stream deltas into the DOM
   }
@@ -70,8 +73,8 @@ const unsubscribe = s.subscribe(() => {
   // drive your own progress UI
 });
 
-// Starting a download requires a user gesture — call from a click:
-button.onclick = () => s.download();   // throws ActivationRequiredError if not from a gesture
+// Downloads are explicit — run()/stream() never start one. Trigger it from a click:
+button.onclick = () => s.download();   // requires a user gesture; throws ActivationRequiredError otherwise
 ```
 
 ## API reference
@@ -129,8 +132,8 @@ interface BaseController {
   getSnapshot(): ControllerState;
   getServerSnapshot(): ControllerState;
   refresh(): Promise<Availability>;              // re-check availability
-  warm(opts?: { signal?: AbortSignal }): Promise<unknown>;     // ensure a live session
-  download(opts?: { signal?: AbortSignal }): Promise<unknown>; // alias for warm — call from a gesture
+  warm(opts?: { signal?: AbortSignal }): Promise<unknown>;     // open a session; never downloads
+  download(opts?: { signal?: AbortSignal }): Promise<unknown>; // download the model — call from a gesture
   invalidate(): void;                            // drop session + re-check (eviction recovery)
   destroy(): void;
 }
@@ -195,7 +198,7 @@ interface ProofreaderOptions {
 ### Utilities
 
 ```ts
-isSupported(): boolean;                 // any built-in AI global exists (covers Edge)
+isSupported(): boolean;                 // any built-in AI global exists
 isApiSupported(api: ChromeAiApi): boolean;
 type ChromeAiApi = "languageModel" | "summarizer" | "writer" | "rewriter"
                  | "proofreader" | "translator" | "languageDetector";
@@ -239,7 +242,7 @@ interface DetectResult { detectedLanguage: string; confidence: number }   // con
 
 class ChromeAiError extends Error {}
 class UnavailableError extends ChromeAiError {}        // API absent or availability 'unavailable'
-class ActivationRequiredError extends ChromeAiError {} // download needs a user gesture
+class ActivationRequiredError extends ChromeAiError {} // model needs downloading first (call download() from a gesture)
 class ContextFullError extends ChromeAiError {}        // chat exceeded context window (call reset())
 ```
 

@@ -73,18 +73,27 @@ export function makeFakeApi(opts: FakeApiOptions = {}): FakeApi {
 
   function makeSession(): FakeSession {
     const streamArgs = (signal?: AbortSignal) =>
-      streamOf(deltas, { ...(opts.failStreamWith ? { fail: opts.failStreamWith } : {}), ...(signal ? { signal } : {}) });
+      streamOf(deltas, {
+        ...(opts.failStreamWith ? { fail: opts.failStreamWith } : {}),
+        ...(signal ? { signal } : {}),
+      });
     const session: FakeSession = {
       prompt: vi.fn(async (input: string) => opts.result ?? `full:${input}`),
-      promptStreaming: vi.fn((_input: string, o?: { signal?: AbortSignal }) => streamArgs(o?.signal)),
+      promptStreaming: vi.fn((_input: string, o?: { signal?: AbortSignal }) =>
+        streamArgs(o?.signal),
+      ),
       summarize: vi.fn(async () => opts.result ?? deltas.join("")),
-      summarizeStreaming: vi.fn((_t: string, o?: { signal?: AbortSignal }) => streamArgs(o?.signal)),
+      summarizeStreaming: vi.fn((_t: string, o?: { signal?: AbortSignal }) =>
+        streamArgs(o?.signal),
+      ),
       write: vi.fn(async () => opts.result ?? deltas.join("")),
       writeStreaming: vi.fn((_t: string, o?: { signal?: AbortSignal }) => streamArgs(o?.signal)),
       rewrite: vi.fn(async () => opts.result ?? deltas.join("")),
       rewriteStreaming: vi.fn((_t: string, o?: { signal?: AbortSignal }) => streamArgs(o?.signal)),
       translate: vi.fn(async () => opts.result ?? deltas.join("")),
-      translateStreaming: vi.fn((_t: string, o?: { signal?: AbortSignal }) => streamArgs(o?.signal)),
+      translateStreaming: vi.fn((_t: string, o?: { signal?: AbortSignal }) =>
+        streamArgs(o?.signal),
+      ),
       proofread: vi.fn(async () => opts.proofreadResult ?? { correctedInput: "", corrections: [] }),
       detect: vi.fn(async () => opts.detectResult ?? []),
       clone: vi.fn(async () => makeSession()),

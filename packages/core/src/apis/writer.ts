@@ -3,7 +3,10 @@ import { createTaskController } from "./task";
 
 interface WriterSession {
   write(prompt: string, opts?: { context?: string; signal?: AbortSignal }): Promise<string>;
-  writeStreaming(prompt: string, opts?: { context?: string; signal?: AbortSignal }): ReadableStream<string>;
+  writeStreaming(
+    prompt: string,
+    opts?: { context?: string; signal?: AbortSignal },
+  ): ReadableStream<string>;
   destroy?(): void;
 }
 
@@ -38,7 +41,10 @@ export function createWriter(options: WriterOptions = {}): TaskController<WriteP
     }),
     availabilityOptions: hints,
     run: (s, p, signal) =>
-      s.write(p.prompt, { ...(p.context ? { context: p.context } : {}), ...(signal ? { signal } : {}) }),
+      s.write(p.prompt, {
+        ...(p.context ? { context: p.context } : {}),
+        ...(signal ? { signal } : {}),
+      }),
     stream: (s, p, o) =>
       s.writeStreaming(p.prompt, { ...(p.context ? { context: p.context } : {}), ...o }),
   });

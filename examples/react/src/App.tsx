@@ -34,7 +34,11 @@ export function App() {
           Built-in AI globals weren't detected in this browser. The demos still render, but AI
           actions show the <b>unavailable</b> fallback. Use desktop Chrome with built-in AI enabled
           — see{" "}
-          <a href="https://developer.chrome.com/docs/ai/get-started" target="_blank" rel="noreferrer">
+          <a
+            href="https://developer.chrome.com/docs/ai/get-started"
+            target="_blank"
+            rel="noreferrer"
+          >
             Google's setup guide
           </a>
           .

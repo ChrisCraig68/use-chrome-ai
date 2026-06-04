@@ -54,11 +54,12 @@ describe("SessionLifecycle", () => {
     expect(api.createCount()).toBe(1);
   });
 
-  it("reports download progress through the monitor", async () => {
+  it("download() reports progress through the monitor", async () => {
+    cleanups.push(setUserActivation(true));
     const api = makeFakeApi({ availability: "downloadable", emitProgress: [0.25, 0.75] });
     const life = lifecycleFor(api);
     const states = await captureStates(life, async () => {
-      await life.warm();
+      await life.download();
     });
     const progresses = states.map((s) => s.downloadProgress);
     expect(progresses).toContain(0.25);
@@ -68,13 +69,22 @@ describe("SessionLifecycle", () => {
     expect(life.getSnapshot().downloadProgress).toBe(1);
   });
 
-  it("throws ActivationRequiredError when a download needs a gesture", async () => {
-    cleanups.push(setUserActivation(false));
-    const life = lifecycleFor(makeFakeApi({ availability: "downloadable" }));
+  it("warm() never starts a download — throws ActivationRequiredError when downloadable", async () => {
+    // Even WITH a user gesture, a normal call must not silently pull the model.
+    cleanups.push(setUserActivation(true));
+    const api = makeFakeApi({ availability: "downloadable" });
+    const life = lifecycleFor(api);
     await expect(life.warm()).rejects.toBeInstanceOf(ActivationRequiredError);
+    expect(api.createCount()).toBe(0); // nothing was created/downloaded
   });
 
-  it("downloads without a gesture once availability is 'available'", async () => {
+  it("download() without a user gesture throws ActivationRequiredError", async () => {
+    cleanups.push(setUserActivation(false));
+    const life = lifecycleFor(makeFakeApi({ availability: "downloadable" }));
+    await expect(life.download()).rejects.toBeInstanceOf(ActivationRequiredError);
+  });
+
+  it("warm() opens a session without a gesture once availability is 'available'", async () => {
     cleanups.push(setUserActivation(false));
     const api = makeFakeApi({ availability: "available" });
     const life = lifecycleFor(api);

@@ -9,7 +9,10 @@ import {
 import { isAbortError } from "../stream";
 
 export interface LanguageModelSession {
-  prompt(input: string, opts?: { signal?: AbortSignal; responseConstraint?: object }): Promise<string>;
+  prompt(
+    input: string,
+    opts?: { signal?: AbortSignal; responseConstraint?: object },
+  ): Promise<string>;
   promptStreaming(input: string, opts?: { signal?: AbortSignal }): ReadableStream<string>;
   clone(opts?: { signal?: AbortSignal }): Promise<LanguageModelSession>;
   destroy?(): void;

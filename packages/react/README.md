@@ -10,14 +10,17 @@ npm i @use-chrome-ai/react   # pulls in use-chrome-ai automatically
 import { useChat } from "@use-chrome-ai/react";
 
 function Chat() {
-  const { messages, input, setInput, send, isStreaming, isUnavailable } =
+  const { messages, input, setInput, send, isStreaming, model } =
     useChat({ system: "You are a helpful assistant." });
 
-  if (isUnavailable) return <p>Built-in AI isn't available here.</p>;
+  if (model.isUnavailable) return <p>Built-in AI isn't available here.</p>;
+  if (model.availability === "downloadable")
+    return <button onClick={() => model.download()}>Enable on-device AI</button>;
+
   return (
     <form onSubmit={(e) => { e.preventDefault(); send(); }}>
       {messages.map((m, i) => <p key={i}><b>{m.role}:</b> {m.content}</p>)}
-      <input value={input} onChange={(e) => setInput(e.target.value)} disabled={isStreaming} />
+      <input value={input} onChange={(e) => setInput(e.target.value)} disabled={isStreaming || !model.isReady} />
     </form>
   );
 }

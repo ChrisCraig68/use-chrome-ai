@@ -49,9 +49,9 @@ export function isApiSupported(api: ChromeAiApi): boolean {
   return getGlobal(GLOBAL_NAME[api]) !== undefined;
 }
 
-/** True if ANY built-in AI global exists (covers Edge's Phi-4-mini too). Cheap,
- *  synchronous capability check — use it to decide whether to render AI features
- *  at all before doing the async `availability()` round-trip. */
+/** True if ANY built-in AI global exists. Cheap, synchronous capability check — use it
+ *  to decide whether to render AI features at all before doing the async `availability()`
+ *  round-trip. */
 export function isSupported(): boolean {
   return (Object.values(GLOBAL_NAME) as string[]).some((name) => getGlobal(name) !== undefined);
 }

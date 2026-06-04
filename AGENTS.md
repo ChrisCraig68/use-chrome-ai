@@ -63,8 +63,10 @@ in a Chrome with built-in AI enabled (`pnpm dev:react`).
 - **`AbortError` is control flow, not failure.** Never `invalidate()` on it (use `isAbortError`).
   Any *other* session-method failure calls `invalidate()` (Chrome can evict the model mid-session)
   → destroy the dead handle + re-check availability.
-- **Downloads need a user gesture.** `warm()` throws `ActivationRequiredError` when a download is
-  required and `navigator.userActivation.isActive` is false. Don't auto-download from effects.
+- **Downloads are explicit.** A normal call (`warm()`, and the `run`/`stream`/`send`/`prompt` paths
+  that route through it) never starts a download — it throws `ActivationRequiredError` while the model
+  is still `downloadable`. Only `download()` starts the download, and it requires a user gesture
+  (`navigator.userActivation.isActive`). Don't auto-download from effects.
 - **Hooks never reject** (they set `error`); **core `create*` functions DO reject** (imperative control).
 - **The token/quota surface is volatile — keep all of it in `core/src/usage.ts`.** Member names
   have been renamed once already; do not spread them across files.

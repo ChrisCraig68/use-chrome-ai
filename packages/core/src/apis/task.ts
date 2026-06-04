@@ -1,5 +1,12 @@
 import { getGlobal } from "../availability";
-import { type AiCtor, SessionLifecycle, runCall, store, type TaskController, streamCall } from "../lifecycle";
+import {
+  type AiCtor,
+  runCall,
+  SessionLifecycle,
+  store,
+  streamCall,
+  type TaskController,
+} from "../lifecycle";
 
 /** Config for a request/response + streaming API (Summarizer, Writer, Rewriter, Translator). */
 export interface TaskConfig<TSession, TParams> {
@@ -8,7 +15,11 @@ export interface TaskConfig<TSession, TParams> {
   createOptions: () => Record<string, unknown>;
   availabilityOptions?: () => Record<string, unknown> | undefined;
   run: (session: TSession, params: TParams, signal?: AbortSignal) => Promise<string>;
-  stream: (session: TSession, params: TParams, opts: { signal?: AbortSignal }) => ReadableStream<string>;
+  stream: (
+    session: TSession,
+    params: TParams,
+    opts: { signal?: AbortSignal },
+  ) => ReadableStream<string>;
 }
 
 /** Build a {@link TaskController} from a per-API config. Create-time options are

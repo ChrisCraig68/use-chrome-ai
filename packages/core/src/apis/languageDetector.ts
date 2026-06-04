@@ -1,5 +1,5 @@
 import { getGlobal } from "../availability";
-import { type AiCtor, type BaseController, SessionLifecycle, runCall, store } from "../lifecycle";
+import { type AiCtor, type BaseController, runCall, SessionLifecycle, store } from "../lifecycle";
 
 export interface DetectResult {
   /** BCP-47 language tag, or "und" when undetermined. */
@@ -29,11 +29,14 @@ export function createLanguageDetector(
     api: "LanguageDetector",
     getCtor: () => getGlobal<AiCtor<LanguageDetectorSession>>("LanguageDetector"),
     createOptions: () => ({
-      ...(options.expectedInputLanguages ? { expectedInputLanguages: options.expectedInputLanguages } : {}),
+      ...(options.expectedInputLanguages
+        ? { expectedInputLanguages: options.expectedInputLanguages }
+        : {}),
     }),
   });
   return {
     ...store(life),
-    detect: (text, signal) => runCall(life, (s) => s.detect(text, signal ? { signal } : undefined), signal),
+    detect: (text, signal) =>
+      runCall(life, (s) => s.detect(text, signal ? { signal } : undefined), signal),
   };
 }

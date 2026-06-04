@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import {
   type BaseController,
   type ControllerState,
+  deriveModelStatus,
   isAbortError,
+  type ModelStatus,
   type Store,
   type TaskController,
 } from "use-chrome-ai";
@@ -45,35 +47,17 @@ export function optionsKey(prefix: string, options: unknown): string {
   return `${prefix}:${JSON.stringify(options ?? {})}`;
 }
 
+/** The shared surface every hook spreads: the whole model lifecycle grouped under one
+ *  `model` field, so each hook's own methods/results stay at the top level. */
 export interface AiStatus {
-  status: ControllerState;
-  availability: ControllerState["availability"];
-  downloadProgress: number;
-  supported: boolean;
-  /** Not supported here, or availability is `unavailable`. Show a fallback. */
-  isUnavailable: boolean;
-  /** A model download is in progress. Render `downloadProgress` (0..1). */
-  isDownloading: boolean;
-  /** The model is downloaded and ready to use. */
-  isReady: boolean;
-  /** Start the model download. Call from a click/tap handler (Chrome needs a gesture). */
-  download: () => Promise<unknown>;
+  /** Model availability, download progress, readiness booleans, and `download()`. */
+  model: ModelStatus;
 }
 
-/** The shared status surface every hook spreads. */
 export function useAiStatus(controller: BaseController): AiStatus {
   const status = useModelStatus(controller);
   const download = useCallback(() => controller.download(), [controller]);
-  return {
-    status,
-    availability: status.availability,
-    downloadProgress: status.downloadProgress,
-    supported: status.supported,
-    isUnavailable: !status.supported || status.availability === "unavailable",
-    isDownloading: status.phase === "creating" || status.availability === "downloading",
-    isReady: status.availability === "available",
-    download,
-  };
+  return { model: deriveModelStatus(status, download) };
 }
 
 export interface TaskHook<TParams> extends AiStatus {
@@ -122,5 +106,5 @@ export function useTask<TParams>(controller: TaskController<TParams>): TaskHook<
     [controller],
   );
 
-  return { ...base, result, isStreaming, error: error ?? base.status.error, stop, stream };
+  return { ...base, result, isStreaming, error: error ?? base.model.status.error, stop, stream };
 }

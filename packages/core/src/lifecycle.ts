@@ -30,8 +30,10 @@ export interface LifecycleConfig<TSession> {
 /** The lifecycle/state methods every controller shares (the framework-agnostic seam). */
 export interface BaseController extends Store<ControllerState> {
   refresh(): Promise<Availability>;
+  /** Open a session for an already-downloaded model; NEVER starts a download (throws
+   *  {@link ActivationRequiredError} when the model is still `downloadable`). */
   warm(opts?: { signal?: AbortSignal }): Promise<unknown>;
-  /** Gesture-friendly alias for `warm()` — name it in click handlers to start a download. */
+  /** Explicitly download the model. Call from a click/tap handler (Chrome needs a gesture). */
   download(opts?: { signal?: AbortSignal }): Promise<unknown>;
   invalidate(): void;
   destroy(): void;
@@ -114,7 +116,10 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
   }
 
   setError(error: unknown): void {
-    this.update({ phase: "error", error: error instanceof Error ? error : new Error(String(error)) });
+    this.update({
+      phase: "error",
+      error: error instanceof Error ? error : new Error(String(error)),
+    });
   }
 
   /** Ported `availability()`. Calls the static availability with the SAME options
@@ -149,11 +154,24 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
   }
 
   /**
-   * Ensure a live session exists, creating (and downloading) it if needed. Concurrent
-   * calls dedupe. Throws {@link ActivationRequiredError} when a download is needed but
-   * there's no user gesture — so a model never silently fails to download from an effect.
+   * Ensure a live session exists for an already-available model — but NEVER start a
+   * download. When the model is still `downloadable`, throws {@link ActivationRequiredError}:
+   * a normal call (run/stream/send/prompt all route through here) must not silently pull
+   * multi-GB weights. Use {@link download} for that. Concurrent calls dedupe.
    */
-  async warm(opts: { signal?: AbortSignal } = {}): Promise<TSession> {
+  warm(opts: { signal?: AbortSignal } = {}): Promise<TSession> {
+    return this.ensure(false, opts);
+  }
+
+  /**
+   * Explicitly download the model (and open the session). Requires a user gesture —
+   * Chrome only starts the download from one. Name it in click/tap handlers.
+   */
+  download(opts: { signal?: AbortSignal } = {}): Promise<TSession> {
+    return this.ensure(true, opts);
+  }
+
+  private async ensure(allowDownload: boolean, opts: { signal?: AbortSignal }): Promise<TSession> {
     opts.signal?.throwIfAborted();
     if (this.current) return this.current;
     if (this.creating) return this.creating;
@@ -161,22 +179,20 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
     const Ctor = this.config.getCtor();
     if (!Ctor) throw new UnavailableError(this.config.api);
     if (!this.checked) await this.refresh();
-    // Re-check after the async refresh: a concurrent warm() may have started creating.
+    // Re-check after the async refresh: a concurrent call may have started creating.
     if (this.current) return this.current;
     if (this.creating) return this.creating;
     if (this.state.availability === "unavailable") throw new UnavailableError(this.config.api);
-    // Only the first download needs a gesture. If the model is already downloaded
-    // ('available') or a download is in progress ('downloading'), create() is fine.
-    if (this.state.availability === "downloadable" && !hasUserActivation()) {
+    // A first-time download is required only when the model is 'downloadable'. We never
+    // start it from a normal call (warm) — the caller must invoke download() explicitly,
+    // and from a user gesture (Chrome's requirement). 'downloading' (join the in-flight
+    // download) and 'available' (just open a session) proceed without a fresh download.
+    if (this.state.availability === "downloadable" && (!allowDownload || !hasUserActivation())) {
       throw new ActivationRequiredError(this.config.api);
     }
 
     this.creating = this.create(Ctor, opts.signal);
     return this.creating;
-  }
-
-  download(opts: { signal?: AbortSignal } = {}): Promise<TSession> {
-    return this.warm(opts);
   }
 
   private async create(Ctor: AiCtor<TSession>, signal?: AbortSignal): Promise<TSession> {

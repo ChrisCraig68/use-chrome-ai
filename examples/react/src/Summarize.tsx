@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useSummarizer } from "@use-chrome-ai/react";
+import { useState } from "react";
 
 const SAMPLE = `Researchers at Stanford this week described a new battery chemistry that could
 meaningfully extend the range of electric vehicles. The design replaces the graphite anode used
@@ -17,13 +17,14 @@ export function Summarize() {
   const [text, setText] = useState(SAMPLE);
   const [type, setType] = useState<"tldr" | "key-points">("key-points");
 
-  const { summarize, result, isStreaming, isUnavailable, isDownloading, downloadProgress, availability, download } =
-    useSummarizer({ type, length: "short" });
+  const { summarize, result, isStreaming, model } = useSummarizer({ type, length: "short" });
 
-  if (isUnavailable) {
+  if (model.isUnavailable) {
     return (
       <div className="card">
-        <p className="error" style={{ margin: 0 }}>The Summarizer API isn't available in this browser.</p>
+        <p className="error" style={{ margin: 0 }}>
+          The Summarizer API isn't available in this browser.
+        </p>
       </div>
     );
   }
@@ -43,20 +44,25 @@ export function Summarize() {
           <option value="tldr">TL;DR</option>
         </select>
 
-        {availability === "downloadable" ? (
-          <button type="button" className="btn btn-primary" onClick={() => download()}>
+        {model.availability === "downloadable" ? (
+          <button type="button" className="btn btn-primary" onClick={() => model.download()}>
             Enable on-device AI
           </button>
         ) : (
-          <button type="button" className="btn btn-primary" onClick={() => summarize(text)} disabled={isStreaming}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => summarize(text)}
+            disabled={!model.isReady || isStreaming}
+          >
             {isStreaming ? "Summarizing…" : "Summarize"}
           </button>
         )}
       </div>
 
-      {isDownloading && (
+      {model.isDownloading && (
         <div className="progress-row">
-          Downloading model… <progress value={downloadProgress} max={1} />
+          Downloading model… <progress value={model.progress} max={1} />
         </div>
       )}
 

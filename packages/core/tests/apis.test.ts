@@ -4,7 +4,8 @@ import { createLanguageModel } from "../src/apis/languageModel";
 import { createProofreader } from "../src/apis/proofreader";
 import { createSummarizer } from "../src/apis/summarizer";
 import { isAbortError } from "../src/stream";
-import { installGlobal, makeFakeApi } from "./helpers";
+import { ActivationRequiredError } from "../src/types";
+import { installGlobal, makeFakeApi, setUserActivation } from "./helpers";
 
 const cleanups: Array<() => void> = [];
 afterEach(() => {
@@ -38,6 +39,22 @@ describe("per-API factories", () => {
     cleanups.push(installGlobal("Summarizer", api.Ctor));
     const s = createSummarizer();
     expect(await s.run({ text: "x" })).toBe("TLDR");
+  });
+
+  it("a normal call never auto-downloads — stream() throws ActivationRequiredError when downloadable", async () => {
+    // Even with a user gesture present, the call must not silently pull the model.
+    cleanups.push(setUserActivation(true));
+    const api = makeFakeApi({ availability: "downloadable" });
+    cleanups.push(installGlobal("Summarizer", api.Ctor));
+    const s = createSummarizer();
+    let caught: unknown;
+    try {
+      await collect(s.stream({ text: "x" }));
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(ActivationRequiredError);
+    expect(api.createCount()).toBe(0); // nothing was created/downloaded
   });
 
   it("languageModel prompts on a throwaway clone", async () => {

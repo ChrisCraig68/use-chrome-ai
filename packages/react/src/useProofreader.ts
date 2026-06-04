@@ -19,7 +19,10 @@ export interface ProofreaderHook extends AiStatus {
 
 /** Proofreader is request/response (no streaming) — hence `isPending`, not `isStreaming`. */
 export function useProofreader(options: ProofreaderOptions = {}): ProofreaderHook {
-  const controller = useController(() => createProofreader(options), optionsKey("proofreader", options));
+  const controller = useController(
+    () => createProofreader(options),
+    optionsKey("proofreader", options),
+  );
   const base = useAiStatus(controller);
   const [result, setResult] = useState<ProofreadResult | null>(null);
   const [isPending, setPending] = useState(false);
@@ -49,5 +52,5 @@ export function useProofreader(options: ProofreaderOptions = {}): ProofreaderHoo
     [controller],
   );
 
-  return { ...base, result, isPending, error: error ?? base.status.error, proofread };
+  return { ...base, result, isPending, error: error ?? base.model.status.error, proofread };
 }

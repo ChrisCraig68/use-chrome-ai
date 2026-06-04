@@ -28,7 +28,9 @@ describe("createChat", () => {
     ]);
 
     // The system prompt is at index 0 of initialPrompts.
-    const createArg = api.Ctor.create.mock.calls[0][0] as { initialPrompts: Array<{ role: string }> };
+    const createArg = api.Ctor.create.mock.calls[0][0] as {
+      initialPrompts: Array<{ role: string }>;
+    };
     expect(createArg.initialPrompts[0]).toEqual({ role: "system", content: "be nice" });
   });
 

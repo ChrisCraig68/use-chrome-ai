@@ -1,5 +1,5 @@
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { usePrompt } from "@use-chrome-ai/react";
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Smart tooltip: highlight any text in the passage and a popover appears next to the
@@ -13,9 +13,19 @@ interface Selection {
 }
 
 const ACTIONS: Array<{ label: string; build: (text: string) => string }> = [
-  { label: "Explain", build: (t) => `Explain the following in one or two plain sentences:\n\n"""${t}"""` },
-  { label: "Simplify", build: (t) => `Explain the following in the simplest possible terms, with no jargon, in one short paragraph:\n\n"""${t}"""` },
-  { label: "Key points", build: (t) => `Summarize the following as 2–4 short bullet points:\n\n"""${t}"""` },
+  {
+    label: "Explain",
+    build: (t) => `Explain the following in one or two plain sentences:\n\n"""${t}"""`,
+  },
+  {
+    label: "Simplify",
+    build: (t) =>
+      `Explain the following in the simplest possible terms, with no jargon, in one short paragraph:\n\n"""${t}"""`,
+  },
+  {
+    label: "Key points",
+    build: (t) => `Summarize the following as 2–4 short bullet points:\n\n"""${t}"""`,
+  },
 ];
 
 const PASSAGE = `The Federal Reserve raised its benchmark interest rate by a quarter point on
@@ -28,17 +38,9 @@ that moving too aggressively risks tipping the economy into a recession, while t
 that allowing inflation to become entrenched would be far more painful to unwind later.`;
 
 export function SmartTooltip() {
-  const {
-    prompt,
-    result,
-    isStreaming,
-    isUnavailable,
-    isDownloading,
-    downloadProgress,
-    availability,
-    download,
-    stop,
-  } = usePrompt({ system: "You are a concise explainer. Answer briefly and clearly." });
+  const { prompt, result, isStreaming, model, stop } = usePrompt({
+    system: "You are a concise explainer. Answer briefly and clearly.",
+  });
 
   const [selection, setSelection] = useState<Selection | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export function SmartTooltip() {
   const run = (label: string, build: (text: string) => string) => {
     if (!selection) return;
     setActive(label);
-    // The click is a user gesture, so the first run can also trigger the model download.
+    // The model is already downloaded by now — the download CTA gates these actions — so this just runs.
     void prompt(build(selection.text));
   };
 
@@ -86,18 +88,36 @@ export function SmartTooltip() {
       </p>
 
       {selection && (
-        <div className="popover" style={popoverPosition(selection.rect)} onMouseDown={(e) => e.preventDefault()}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div
+          className="popover"
+          style={popoverPosition(selection.rect)}
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 10,
+            }}
+          >
             <span className="badge">Smart tooltip</span>
             <button type="button" className="icon-btn" onClick={() => setSelection(null)}>
               ✕
             </button>
           </div>
 
-          {isUnavailable ? (
-            <p className="error" style={{ margin: 0 }}>On-device AI isn't available in this browser.</p>
-          ) : availability === "downloadable" ? (
-            <button type="button" className="btn btn-primary" style={{ width: "100%" }} onClick={() => download()}>
+          {model.isUnavailable ? (
+            <p className="error" style={{ margin: 0 }}>
+              On-device AI isn't available in this browser.
+            </p>
+          ) : model.availability === "downloadable" ? (
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ width: "100%" }}
+              onClick={() => model.download()}
+            >
               Enable on-device AI (downloads the model)
             </button>
           ) : (
@@ -108,7 +128,7 @@ export function SmartTooltip() {
                     key={a.label}
                     type="button"
                     className={`btn btn-sm ${active === a.label ? "btn-primary" : ""}`}
-                    disabled={isStreaming}
+                    disabled={isStreaming || !model.isReady}
                     onClick={() => run(a.label, a.build)}
                   >
                     {a.label}
@@ -116,9 +136,9 @@ export function SmartTooltip() {
                 ))}
               </div>
 
-              {isDownloading && (
+              {model.isDownloading && (
                 <div className="progress-row" style={{ marginTop: 10 }}>
-                  Downloading model… <progress value={downloadProgress} max={1} />
+                  Downloading model… <progress value={model.progress} max={1} />
                 </div>
               )}
 

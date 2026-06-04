@@ -8,7 +8,7 @@ npm i @use-chrome-ai/react   # pulls in use-chrome-ai automatically
 
 `react` is a peer dependency (>=18, for `useSyncExternalStore`).
 
-> Built-in AI is desktop Chrome/Edge only and partly behind flags/origin trials — see [Get started with built-in AI](https://developer.chrome.com/docs/ai/get-started). Every hook exposes `isUnavailable`; gate your UI on it and render a fallback.
+> Built-in AI is desktop Chrome only and partly behind flags/origin trials — see [Get started with built-in AI](https://developer.chrome.com/docs/ai/get-started). Every hook exposes `model.isUnavailable`; gate your UI on it and render a fallback.
 
 ## A streaming chatbot, in one hook
 
@@ -16,16 +16,18 @@ npm i @use-chrome-ai/react   # pulls in use-chrome-ai automatically
 import { useChat } from "@use-chrome-ai/react";
 
 export function Chat() {
-  const {
-    messages, input, setInput, send, stop,
-    isStreaming, isUnavailable, isDownloading, downloadProgress,
-  } = useChat({ system: "You are a helpful assistant." });
+  const { messages, input, setInput, send, stop, isStreaming, model } =
+    useChat({ system: "You are a helpful assistant." });
 
-  if (isUnavailable) return <p>Built-in AI isn't available in this browser.</p>;
+  if (model.isUnavailable) return <p>Built-in AI isn't available in this browser.</p>;
+
+  // Download once, on an explicit click — a normal send() never auto-downloads.
+  if (model.availability === "downloadable")
+    return <button onClick={() => model.download()}>Enable on-device AI</button>;
+  if (model.isDownloading) return <progress value={model.progress} />;
 
   return (
     <div>
-      {isDownloading && <progress value={downloadProgress} />}
       {messages.map((m, i) => <p key={i}><b>{m.role}:</b> {m.content}</p>)}
       <form onSubmit={(e) => { e.preventDefault(); send(); }}>
         <input value={input} onChange={(e) => setInput(e.target.value)} disabled={isStreaming} />
@@ -37,11 +39,11 @@ export function Chat() {
 }
 ```
 
-The first `send()` from the form submit (a user gesture) downloads the model with progress, then streams the reply into `messages`.
+Click **Enable on-device AI** once to download the model (with progress); after that, `send()` streams the reply into `messages`.
 
 ## The hooks
 
-Every hook returns a shared status surface (`availability`, `downloadProgress`, `isUnavailable`, `isDownloading`, `isReady`, `download()`) plus its own methods. Options are create-time; changing them transparently re-opens the on-device session.
+Every hook returns a `model` object (`model.availability`, `model.progress`, `model.isUnavailable`, `model.isDownloading`, `model.isReady`, `model.download()`) plus its own methods. Options are create-time; changing them transparently re-opens the on-device session.
 
 | Hook | API | What you get |
 | --- | --- | --- |
@@ -81,15 +83,15 @@ const [top] = (await detect("bonjour le monde")) ?? [];
 ## Gating the model download
 
 ```tsx
-const { availability, isDownloading, downloadProgress, download } = useSummarizer();
+const { model } = useSummarizer();
 
-if (availability === "downloadable")
-  return <button onClick={() => download()}>Enable on-device AI</button>;
-if (isDownloading)
-  return <progress value={downloadProgress} max={1} />;
+if (model.availability === "downloadable")
+  return <button onClick={() => model.download()}>Enable on-device AI</button>;
+if (model.isDownloading)
+  return <progress value={model.progress} max={1} />;
 ```
 
-Calling an action straight from a click already satisfies the gesture requirement, so the common path "just works."
+An action never triggers a download — call `model.download()` first (from a click), then run the action once `model.isReady`.
 
 ## Structured (JSON) output
 
@@ -116,13 +118,17 @@ const { error, reset } = useChat();
 
 ## Hook signatures
 
-Every hook returns this shared status surface, spread into its own fields:
+Every hook spreads this shared surface — the whole model lifecycle grouped under one `model` field — alongside its own methods:
 
 ```ts
 interface AiStatus {
-  status: ControllerState;          // the full snapshot
+  model: ModelStatus;
+}
+
+interface ModelStatus {
+  status: ControllerState;          // the full snapshot (escape hatch for phase/error)
   availability: Availability;       // 'unavailable' | 'downloadable' | 'downloading' | 'available'
-  downloadProgress: number;         // 0..1, meaningful while downloading
+  progress: number;                 // 0..1, meaningful while downloading
   supported: boolean;               // the API's global class exists in this browser
   isUnavailable: boolean;           // not supported, or availability === 'unavailable'
   isDownloading: boolean;
@@ -131,7 +137,7 @@ interface AiStatus {
 }
 ```
 
-Create-time option types (`ChatOptions`, `LanguageModelOptions`, `SummarizerOptions`, `WriterOptions`, `RewriterOptions`, `ProofreaderOptions`) and the shared types (`ControllerState`, `Availability`, `ProofreadResult`, `DetectResult`) are defined in the [core reference](./core.md#api-reference).
+Create-time option types (`ChatOptions`, `LanguageModelOptions`, `SummarizerOptions`, `WriterOptions`, `RewriterOptions`, `ProofreaderOptions`) and the shared types (`ControllerState`, `ModelStatus`, `Availability`, `ProofreadResult`, `DetectResult`) are defined in the [core reference](./core.md#api-reference).
 
 ```ts
 useChat(options?: ChatOptions): AiStatus & {

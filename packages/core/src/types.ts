@@ -18,6 +18,45 @@ export interface ControllerState {
   readonly error: Error | null;
 }
 
+/** A UI-friendly view of a controller's model lifecycle: the raw snapshot, derived
+ *  booleans, download progress, and the gesture-gated download trigger. Framework
+ *  adapters group these under a single `model` field so a hook's own surface stays small. */
+export interface ModelStatus {
+  /** The full controller snapshot — escape hatch for `phase` / `error`. */
+  status: ControllerState;
+  availability: Availability;
+  /** 0..1, meaningful while a model is downloading. */
+  progress: number;
+  /** The API's global class exists in this browser. */
+  supported: boolean;
+  /** Not supported here, or availability is `unavailable`. Render a fallback. */
+  isUnavailable: boolean;
+  /** A model download is in progress. */
+  isDownloading: boolean;
+  /** The model is downloaded and ready to use. */
+  isReady: boolean;
+  /** Start the model download. Call from a click/tap handler (Chrome needs a gesture). */
+  download: () => Promise<unknown>;
+}
+
+/** Build a {@link ModelStatus} view from a controller snapshot and its `download` trigger.
+ *  Shared by the React and Vue adapters so the derivation lives in exactly one place. */
+export function deriveModelStatus(
+  status: ControllerState,
+  download: () => Promise<unknown>,
+): ModelStatus {
+  return {
+    status,
+    availability: status.availability,
+    progress: status.downloadProgress,
+    supported: status.supported,
+    isUnavailable: !status.supported || status.availability === "unavailable",
+    isDownloading: status.phase === "creating" || status.availability === "downloading",
+    isReady: status.availability === "available",
+    download,
+  };
+}
+
 /** The minimal store contract a UI framework binds to. Matches React's
  *  `useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)` exactly. */
 export interface Store<S> {
@@ -46,12 +85,13 @@ export class UnavailableError extends ChromeAiError {
   }
 }
 
-/** The model still needs to download (multi-GB) and that download must be started
- *  from a user gesture. Call `download()` (or the action) from a click/tap handler. */
+/** The model still needs to download (multi-GB) before this API can run. A normal call
+ *  never starts that download — call `download()` explicitly, from a click/tap handler
+ *  (Chrome only starts the download from a user gesture). */
 export class ActivationRequiredError extends ChromeAiError {
   constructor(public readonly api: string) {
     super(
-      `${api} needs to download its model, which Chrome only allows from a user gesture. Call download() (or trigger the action) from a click/tap handler.`,
+      `${api} needs its model downloaded first. Call download() from a click/tap handler (Chrome only starts the download from a user gesture); a normal call will not auto-download.`,
     );
     this.name = "ActivationRequiredError";
   }
@@ -61,7 +101,9 @@ export class ActivationRequiredError extends ChromeAiError {
  *  The session is unusable; call `reset()` to start a fresh conversation. */
 export class ContextFullError extends ChromeAiError {
   constructor() {
-    super("The chat exceeded the model's context window. Call reset() to start a new conversation.");
+    super(
+      "The chat exceeded the model's context window. Call reset() to start a new conversation.",
+    );
     this.name = "ContextFullError";
   }
 }

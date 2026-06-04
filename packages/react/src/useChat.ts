@@ -89,6 +89,6 @@ export function useChat(options: ChatOptions = {}): ChatHook {
     stop,
     reset,
     isStreaming,
-    error: error ?? base.status.error,
+    error: error ?? base.model.status.error,
   };
 }

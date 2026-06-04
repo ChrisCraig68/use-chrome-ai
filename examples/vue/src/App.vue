@@ -1,19 +1,13 @@
 <script setup lang="ts">
 import { useChat } from "@use-chrome-ai/vue";
-import { computed, ref } from "vue";
+import { ref } from "vue";
 
 // The Vue composable mirrors the React useChat — same core, same streaming behavior.
-const { messages, isStreaming, status, send, stop, reset } = useChat({
+const { messages, isStreaming, model, send, stop, reset } = useChat({
   system: "You are a concise, friendly assistant.",
 });
 
 const input = ref("");
-const unavailable = computed(
-  () => !status.value.supported || status.value.availability === "unavailable",
-);
-const downloading = computed(
-  () => status.value.phase === "creating" || status.value.availability === "downloading",
-);
 
 function onSubmit() {
   const text = input.value;
@@ -32,13 +26,21 @@ function onSubmit() {
     <p class="lede">Same core as the React demos, bound with a Vue composable.</p>
 
     <div class="card" style="margin-top: 22px">
-      <p v-if="unavailable" class="muted" style="margin: 0">
+      <p v-if="model.isUnavailable" class="muted" style="margin: 0">
         On-device AI isn't available in this browser.
       </p>
 
       <template v-else>
-        <div v-if="downloading" class="progress-row" style="margin-bottom: 12px">
-          Downloading model… <progress :value="status.downloadProgress" max="1" />
+        <button
+          v-if="model.availability === 'downloadable'"
+          type="button"
+          class="btn btn-primary"
+          @click="model.download()"
+        >
+          Enable on-device AI
+        </button>
+        <div v-if="model.isDownloading" class="progress-row" style="margin-bottom: 12px">
+          Downloading model… <progress :value="model.progress" max="1" />
         </div>
 
         <div class="thread">
@@ -57,9 +59,21 @@ function onSubmit() {
         </div>
 
         <form class="composer" @submit.prevent="onSubmit">
-          <input v-model="input" class="field" :disabled="isStreaming" placeholder="Ask something…" />
+          <input
+            v-model="input"
+            class="field"
+            :disabled="isStreaming || !model.isReady"
+            placeholder="Ask something…"
+          />
           <button v-if="isStreaming" type="button" class="btn" @click="stop">Stop</button>
-          <button v-else type="submit" class="btn btn-primary" :disabled="!input.trim()">Send</button>
+          <button
+            v-else
+            type="submit"
+            class="btn btn-primary"
+            :disabled="!input.trim() || !model.isReady"
+          >
+            Send
+          </button>
           <button v-if="messages.length > 0 && !isStreaming" type="button" class="btn" @click="reset">
             Reset
           </button>
