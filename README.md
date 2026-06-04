@@ -122,7 +122,6 @@ Then set **Settings → Pages → Source** to the `gh-pages` branch. The site se
 ## Documentation
 
 - Quick starts (usage + signatures): [core](docs/core.md) · [React](docs/react.md) · [Vue](docs/vue.md)
-- [Enabling built-in AI](docs/enabling-built-in-ai.md) — what end-users need, iframe permission tokens, and a verify checklist (links out to Google for setup).
 - [`llms.txt`](llms.txt) — a machine-readable map of the project for AI assistants.
 - [AGENTS.md](AGENTS.md) — guidance for coding agents working in this repo.
 

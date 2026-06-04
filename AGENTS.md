@@ -27,15 +27,18 @@ pnpm install            # install the workspace
 pnpm -r typecheck       # tsc --noEmit in every package (examples have no typecheck script)
 pnpm -r test            # vitest (mocked AI globals — no real model needed)
 pnpm -r build           # tsup → dist for packages; vite build for the demo apps
+pnpm lint               # biome check (lint + format verify); CI runs `biome ci .`
+pnpm lint:fix           # biome check --write (safe lint fixes + format)
+pnpm format             # biome format --write (format only)
 pnpm dev:react          # React demo app  → http://localhost:5173
 pnpm dev:vue            # Vue demo app    → http://localhost:5174
 pnpm build:demos        # build both demos into examples/dist (React at /, Vue at /vue/)
 pnpm changeset          # record a change for the next release
 ```
 
-Always run `pnpm -r typecheck && pnpm -r test` after changing code. Tests run against **mocked
+Always run `pnpm -r typecheck && pnpm -r test && pnpm lint` after changing code. Tests run against **mocked
 globals** (see `packages/*/tests/helpers.ts`); the real Gemini Nano path is verified manually
-per [`docs/enabling-built-in-ai.md`](./docs/enabling-built-in-ai.md).
+in a Chrome with built-in AI enabled (`pnpm dev:react`).
 
 ## Architecture (read before changing core)
 

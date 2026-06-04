@@ -17,7 +17,6 @@ Things an assistant should know before writing code with this library:
 - [Core quick start](./docs/core.md): vanilla JS — `createChat` + the `create*` factories, plus the full type/factory reference.
 - [React quick start](./docs/react.md): the hooks + their signatures.
 - [Vue quick start](./docs/vue.md): the composables + their signatures.
-- [Enabling built-in AI](./docs/enabling-built-in-ai.md): links to Google's setup docs, the iframe permission tokens, and a verify checklist.
 
 ## Packages
 
