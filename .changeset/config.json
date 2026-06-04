@@ -7,5 +7,6 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
+  "privatePackages": false,
   "ignore": ["@use-chrome-ai/example-react", "@use-chrome-ai/example-vue"]
 }
