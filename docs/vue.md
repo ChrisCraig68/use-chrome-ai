@@ -62,6 +62,24 @@ const status = useModelStatus(summarizer); // Ref<ControllerState>
 const summary = await summarizer.run({ text: article });
 ```
 
+## Signatures
+
+```ts
+useChat(options?: ChatOptions): {
+  status: Readonly<Ref<ControllerState>>;
+  messages: Ref<{ role: "user" | "assistant"; content: string }[]>;
+  isStreaming: Ref<boolean>;
+  error: Ref<Error | null>;
+  send(text: string): Promise<void>;
+  stop(): void;
+  reset(): void;
+}
+
+useModelStatus<S>(store: Store<S>): Readonly<Ref<S>>;   // bind any controller to a Vue ref
+```
+
+`ChatOptions` and `ControllerState` are defined in the [core reference](./core.md#api-reference).
+
 ## Beyond chat
 
-This adapter ships `useChat` + `useModelStatus`. The full core is re-exported, so the other six APIs are available as factories (`createSummarizer`, `createTranslator`, …) bound with `useModelStatus`. See the [core quick start](./core.md) for their shapes, the [API reference](./api-reference.md) for full signatures, and the [project README](../README.md).
+This adapter ships `useChat` + `useModelStatus`. The full core is re-exported, so the other six APIs are available as factories (`createSummarizer`, `createTranslator`, …) bound with `useModelStatus`. See the [core quick start](./core.md) for their shapes and signatures, and the [project README](../README.md).

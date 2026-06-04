@@ -82,7 +82,7 @@ One hook (React) / composable (Vue) / factory (core) per API:
 | [Translator](https://developer.chrome.com/docs/ai/translator-api) | `createTranslator` | `useTranslator` | — |
 | [Language Detector](https://developer.chrome.com/docs/ai/language-detection) | `createLanguageDetector` | `useLanguageDetector` | — |
 
-The Vue adapter currently ships `useChat` + `useModelStatus`; everything else is available through the re-exported core. See the per-package quick starts for usage, and the [API reference](docs/api-reference.md) for full signatures.
+The Vue adapter currently ships `useChat` + `useModelStatus`; everything else is available through the re-exported core. See the per-framework quick starts for usage and signatures.
 
 ## Two things to know
 
@@ -121,8 +121,7 @@ Then set **Settings → Pages → Source** to the `gh-pages` branch. The site se
 
 ## Documentation
 
-- Quick starts: [core](docs/core.md) · [React](docs/react.md) · [Vue](docs/vue.md)
-- [API reference](docs/api-reference.md) — every hook, core factory, and type with signatures.
+- Quick starts (usage + signatures): [core](docs/core.md) · [React](docs/react.md) · [Vue](docs/vue.md)
 - [Enabling built-in AI](docs/enabling-built-in-ai.md) — what end-users need, iframe permission tokens, and a verify checklist (links out to Google for setup).
 - [`llms.txt`](llms.txt) — a machine-readable map of the project for AI assistants.
 - [AGENTS.md](AGENTS.md) — guidance for coding agents working in this repo.

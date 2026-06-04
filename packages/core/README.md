@@ -18,4 +18,4 @@ if (isSupported()) {
 }
 ```
 
-**→ Full quick start: [docs/core.md](https://github.com/ChrisCraig68/use-chrome-ai/blob/main/docs/core.md)** · [API reference](https://github.com/ChrisCraig68/use-chrome-ai/blob/main/docs/api-reference.md) · [project README](https://github.com/ChrisCraig68/use-chrome-ai#readme)
+**→ Full quick start + API reference: [docs/core.md](https://github.com/ChrisCraig68/use-chrome-ai/blob/main/docs/core.md)** · [project README](https://github.com/ChrisCraig68/use-chrome-ai#readme)

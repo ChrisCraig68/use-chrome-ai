@@ -114,4 +114,67 @@ const { error, reset } = useChat();
 {error?.name === "ContextFullError" && <button onClick={reset}>Start over</button>}
 ```
 
-See the [full API reference](./api-reference.md) and the [project README](../README.md).
+## Hook signatures
+
+Every hook returns this shared status surface, spread into its own fields:
+
+```ts
+interface AiStatus {
+  status: ControllerState;          // the full snapshot
+  availability: Availability;       // 'unavailable' | 'downloadable' | 'downloading' | 'available'
+  downloadProgress: number;         // 0..1, meaningful while downloading
+  supported: boolean;               // the API's global class exists in this browser
+  isUnavailable: boolean;           // not supported, or availability === 'unavailable'
+  isDownloading: boolean;
+  isReady: boolean;                 // availability === 'available'
+  download(): Promise<unknown>;     // start the model download — CALL FROM A CLICK HANDLER
+}
+```
+
+Create-time option types (`ChatOptions`, `LanguageModelOptions`, `SummarizerOptions`, `WriterOptions`, `RewriterOptions`, `ProofreaderOptions`) and the shared types (`ControllerState`, `Availability`, `ProofreadResult`, `DetectResult`) are defined in the [core reference](./core.md#api-reference).
+
+```ts
+useChat(options?: ChatOptions): AiStatus & {
+  messages: { role: "user" | "assistant"; content: string }[];
+  input: string; setInput(v: string): void;
+  send(text?: string): Promise<void>;   // defaults to current input; streams reply into messages
+  stop(): void; reset(): void;
+  isStreaming: boolean; error: Error | null;
+}
+
+usePrompt(options?: LanguageModelOptions): AiStatus & {
+  prompt(input: string): Promise<string>;   // streams into `result`
+  result: string; isStreaming: boolean; error: Error | null; stop(): void;
+}
+
+useSummarizer(options?: SummarizerOptions): AiStatus & {
+  summarize(text: string, perCall?: { context?: string }): Promise<string>;
+  result: string; isStreaming: boolean; error: Error | null; stop(): void;
+}
+useWriter(options?: WriterOptions): AiStatus & {
+  write(prompt: string, perCall?: { context?: string }): Promise<string>;
+  result: string; isStreaming: boolean; error: Error | null; stop(): void;
+}
+useRewriter(options?: RewriterOptions): AiStatus & {
+  rewrite(text: string, perCall?: { context?: string }): Promise<string>;
+  result: string; isStreaming: boolean; error: Error | null; stop(): void;
+}
+useTranslator(pair: { sourceLanguage: string; targetLanguage: string }): AiStatus & {
+  translate(text: string): Promise<string>;
+  result: string; isStreaming: boolean; error: Error | null; stop(): void;
+}
+
+useProofreader(options?: ProofreaderOptions): AiStatus & {
+  proofread(text: string): Promise<ProofreadResult | null>;
+  result: ProofreadResult | null; isPending: boolean; error: Error | null;
+}
+useLanguageDetector(options?: { expectedInputLanguages?: string[] }): AiStatus & {
+  detect(text: string): Promise<DetectResult[] | null>;
+  result: DetectResult[] | null; isPending: boolean; error: Error | null;
+}
+
+useModelStatus(controller): ControllerState;             // bind a controller's status
+useAiController(make, key): AiStatus & { controller };   // escape hatch: full controller access
+```
+
+Back to the [project README](../README.md).

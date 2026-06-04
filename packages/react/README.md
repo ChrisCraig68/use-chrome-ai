@@ -23,4 +23,4 @@ function Chat() {
 }
 ```
 
-**→ Full quick start: [docs/react.md](https://github.com/ChrisCraig68/use-chrome-ai/blob/main/docs/react.md)** · [API reference](https://github.com/ChrisCraig68/use-chrome-ai/blob/main/docs/api-reference.md) · [project README](https://github.com/ChrisCraig68/use-chrome-ai#readme)
+**→ Full quick start + hook signatures: [docs/react.md](https://github.com/ChrisCraig68/use-chrome-ai/blob/main/docs/react.md)** · [project README](https://github.com/ChrisCraig68/use-chrome-ai#readme)

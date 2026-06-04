@@ -15,4 +15,4 @@ const { messages, isStreaming, status, send } = useChat({
 // status.value.availability → 'unavailable' | 'downloadable' | 'downloading' | 'available'
 ```
 
-**→ Full quick start: [docs/vue.md](https://github.com/ChrisCraig68/use-chrome-ai/blob/main/docs/vue.md)** · [API reference](https://github.com/ChrisCraig68/use-chrome-ai/blob/main/docs/api-reference.md) · [project README](https://github.com/ChrisCraig68/use-chrome-ai#readme)
+**→ Full quick start + signatures: [docs/vue.md](https://github.com/ChrisCraig68/use-chrome-ai/blob/main/docs/vue.md)** · [project README](https://github.com/ChrisCraig68/use-chrome-ai#readme)

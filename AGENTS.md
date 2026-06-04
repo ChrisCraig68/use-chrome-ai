@@ -14,7 +14,7 @@ packages/react   → "@use-chrome-ai/react"   React hooks (peer: react; dep: use
 packages/vue     → "@use-chrome-ai/vue"     Vue composables (peer: vue; dep: use-chrome-ai)
 examples/react   → standalone Vite + React demo app (imports packages from source)
 examples/vue     → standalone Vite + Vue demo app (imports packages from source)
-docs/            → per-framework quick starts (core/react/vue), API reference, enabling built-in AI
+docs/            → per-framework quick starts + signatures (core/react/vue), enabling built-in AI
 ```
 
 Per-framework quick starts live in `docs/{core,react,vue}.md`; each package's `README.md` is a
