@@ -1,25 +1,55 @@
 # use-chrome-ai
 
-> Headless, framework-agnostic primitives + React hooks + Vue composables for Chrome's built-in AI (Gemini Nano). Runs on-device — no API keys, no server, nothing leaves the browser. Covers all seven APIs: Prompt/LanguageModel, Summarizer, Writer, Rewriter, Proofreader, Translator, Language Detector. Streaming, model-download progress, user-activation gating, and mid-session eviction recovery are handled for you. The library ships logic only — you build the UI.
+Headless primitives for Chrome's built-in AI (Gemini Nano). The library runs in the
+browser, uses no API keys, ships no UI, and supports the framework-agnostic core plus
+React and Vue adapters. For Chrome setup, API status, requirements, and model-management
+details, point readers to Chrome's docs instead of restating them here.
 
-Install: `npm i @use-chrome-ai/react` (React) · `npm i use-chrome-ai` (vanilla JS) · `npm i @use-chrome-ai/vue` (Vue). Each adapter depends on and re-exports the core, so you can import the hooks and the `create*`/`isSupported` helpers from one place.
+Install:
 
-Things an assistant should know before writing code with this library:
+- Core: `npm i use-chrome-ai`
+- React: `npm i @use-chrome-ai/react`
+- Vue: `npm i @use-chrome-ai/vue`
 
-- **Progressive enhancement, never throws on unsupported browsers.** Built-in AI is desktop Chrome only, partly behind flags/origin trials, with real disk/VRAM requirements. Every hook exposes a `model` object (`model.isUnavailable` / `model.availability`); gate your UI on it and render a fallback.
-- **First use downloads a multi-GB model and Chrome requires a user gesture to start it.** When `model.availability === 'downloadable'`, render a button and call `model.download()` from its click handler. A normal call never auto-downloads — calling an action before the model is ready throws `ActivationRequiredError`.
-- **Streaming** resolves into `result` (task hooks: `useSummarizer`/`useWriter`/`useRewriter`/`useTranslator`/`usePrompt`) or `messages` (`useChat`). Abort with `stop()`. Hooks never reject — read `error`. Core functions (`create*`) DO reject, for imperative control.
-- **`availability`** is `'unavailable' | 'downloadable' | 'downloading' | 'available'`. **`phase`** (`'idle' | 'creating' | 'running' | 'streaming' | 'error'`) is what the controller is doing right now.
+The React and Vue adapters re-export the core.
+
+## Chrome Docs
+
+- Built-in AI overview: https://developer.chrome.com/docs/ai/built-in
+- API status: https://developer.chrome.com/docs/ai/built-in-apis
+- Get started: https://developer.chrome.com/docs/ai/get-started
+- Inform users of model download: https://developer.chrome.com/docs/ai/inform-users-of-model-download
+- Model management: https://developer.chrome.com/docs/ai/understand-built-in-model-management
+- Prompt API: https://developer.chrome.com/docs/ai/prompt-api
+- Summarizer API: https://developer.chrome.com/docs/ai/summarizer-api
+- Writer API: https://developer.chrome.com/docs/ai/writer-api
+- Rewriter API: https://developer.chrome.com/docs/ai/rewriter-api
+- Proofreader API: https://developer.chrome.com/docs/ai/proofreader-api
+- Translator API: https://developer.chrome.com/docs/ai/translator-api
+- Language Detector API: https://developer.chrome.com/docs/ai/language-detection
+
+## Library Rules
+
+- Gate UI on `model.isUnavailable` or the core controller snapshot.
+- When availability is `"downloadable"`, render a button and call `download()` from that
+  button.
+- Hooks never reject; read `error`. Core controller methods do reject.
+- Streaming hooks write into `messages` (`useChat`) or `result` (task hooks). Abort with
+  `stop()`.
 
 ## Docs
 
-- [README](./README.md): overview, the one-hook chatbot, the seven APIs, the demos.
-- [Core quick start](./docs/core.md): vanilla JS — `createChat` + the `create*` factories, plus the full type/factory reference.
-- [React quick start](./docs/react.md): the hooks + their signatures.
-- [Vue quick start](./docs/vue.md): the composables + their signatures.
+- [README](./README.md): short overview, package table, one React example, demos.
+- [Core](./docs/core.md): vanilla JS, controller store, task APIs, compact reference.
+- [React](./docs/react.md): hooks, model status, examples, signatures.
+- [Vue](./docs/vue.md): chat composable, core controller binding, signatures.
 
 ## Packages
 
-- `use-chrome-ai`: zero-dependency, framework-agnostic core — `createChat` + seven `create*` factories + `isSupported`/`isApiSupported` + streaming/error utilities.
-- `@use-chrome-ai/react`: React hooks — `useChat`, `usePrompt`, `useSummarizer`, `useWriter`, `useRewriter`, `useTranslator`, `useProofreader`, `useLanguageDetector`, `useModelStatus`, `useAiController`.
-- `@use-chrome-ai/vue`: Vue composables — `useChat`, `useModelStatus`.
+- `use-chrome-ai`: `createChat`, `createLanguageModel`, `createSummarizer`,
+  `createWriter`, `createRewriter`, `createProofreader`, `createTranslator`,
+  `createLanguageDetector`, capability helpers, stream helpers, shared types.
+- `@use-chrome-ai/react`: `useChat`, `usePrompt`, `useSummarizer`, `useWriter`,
+  `useRewriter`, `useProofreader`, `useTranslator`, `useLanguageDetector`,
+  `useModelStatus`, `useAiController`.
+- `@use-chrome-ai/vue`: `useChat`, `useModelStatus`, plus all core exports.

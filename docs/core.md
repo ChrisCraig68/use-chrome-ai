@@ -1,43 +1,74 @@
-# use-chrome-ai
+# use-chrome-ai Core
 
-Framework-agnostic core for [Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in) (Gemini Nano). Zero dependencies, plain TypeScript — drop it into any web page or framework. It handles availability gating, model-download progress, streaming, abort, and mid-session eviction recovery; you build the UI.
-
-The React and Vue adapters ([`@use-chrome-ai/react`](./react.md), [`@use-chrome-ai/vue`](./vue.md)) are thin wrappers over this package.
+Framework-agnostic TypeScript primitives for
+[Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in). The core has zero
+runtime dependencies and can be used in plain browser code, web components, or any UI
+framework.
 
 ```bash
 npm i use-chrome-ai
 ```
 
-> Built-in AI is desktop Chrome only and partly behind flags/origin trials — see [Get started with built-in AI](https://developer.chrome.com/docs/ai/get-started). Feature-detect with `isSupported()` and render a fallback when it's missing.
+React and Vue users can import the same core exports from
+[`@use-chrome-ai/react`](./react.md) or [`@use-chrome-ai/vue`](./vue.md).
 
-## Streaming chat
+## Chrome Docs
+
+Use Chrome's docs for platform setup, status, and API-specific details:
+
+- [Built-in AI overview](https://developer.chrome.com/docs/ai/built-in)
+- [API status](https://developer.chrome.com/docs/ai/built-in-apis)
+- [Get started](https://developer.chrome.com/docs/ai/get-started)
+- [Prompt API](https://developer.chrome.com/docs/ai/prompt-api)
+- [Summarizer API](https://developer.chrome.com/docs/ai/summarizer-api)
+- [Writer API](https://developer.chrome.com/docs/ai/writer-api)
+- [Rewriter API](https://developer.chrome.com/docs/ai/rewriter-api)
+- [Proofreader API](https://developer.chrome.com/docs/ai/proofreader-api)
+- [Translator API](https://developer.chrome.com/docs/ai/translator-api)
+- [Language Detector API](https://developer.chrome.com/docs/ai/language-detection)
+
+## Chat
 
 ```ts
 import { createChat, isSupported } from "use-chrome-ai";
 
-if (isSupported()) {
-  const chat = createChat({ system: "You are a helpful assistant." });
-
-  // One-time: download the model from a click (Chrome requires a user gesture).
-  await chat.download();
-
-  // Then stream replies — a normal send() never triggers a download:
-  for await (const delta of chat.send("Hello!")) {
-    output.textContent += delta; // stream deltas into the DOM
-  }
+if (!isSupported()) {
+  fallback.hidden = false;
 }
+
+const chat = createChat({ system: "You are a helpful assistant." });
+
+chat.subscribe(() => {
+  const { availability, downloadProgress } = chat.getSnapshot();
+  downloadButton.hidden = availability !== "downloadable";
+  progress.hidden = availability !== "downloading";
+  progress.value = downloadProgress;
+});
+
+downloadButton.onclick = () => {
+  void chat.download();
+};
+
+sendButton.onclick = async () => {
+  for await (const delta of chat.send(input.value)) {
+    output.textContent += delta;
+  }
+};
 ```
 
-`chat.messages` holds the running conversation. `createChat` keeps one session and its context across turns; `chat.reset()` starts fresh.
+`createChat` keeps one LanguageModel session alive across turns. Use `chat.messages` for
+the transcript and `chat.reset()` when you want a fresh conversation.
 
-## One-shot tasks
+## One-Shot Tasks
+
+Task APIs share the same library shape: create a controller, then call `run()` for a full
+response or `stream()` for deltas.
 
 ```ts
 import { createSummarizer, createTranslator } from "use-chrome-ai";
 
 const summarizer = createSummarizer({ type: "key-points", length: "short" });
-const summary = await summarizer.run({ text: longArticle });   // non-streaming
-// …or summarizer.stream({ text }) for an AsyncGenerator<string>
+const summary = await summarizer.run({ text: article });
 
 const translator = createTranslator({ sourceLanguage: "en", targetLanguage: "fr" });
 for await (const delta of translator.stream({ text: "Good morning" })) {
@@ -45,205 +76,180 @@ for await (const delta of translator.stream({ text: "Good morning" })) {
 }
 ```
 
-The same shape applies to `createWriter`, `createRewriter`, `createProofreader`, and `createLanguageDetector`.
+The same controller shape powers Writer, Rewriter, Translator, and Summarizer. Proofreader
+and Language Detector are request/response APIs.
 
-## Structured (JSON) output
+## Structured Output
+
+Use `createLanguageModel()` when you want the Prompt API without chat history, including
+grammar-constrained JSON output.
 
 ```ts
 import { createLanguageModel } from "use-chrome-ai";
 
-const lm = createLanguageModel();
-const json = await lm.prompt("List 3 fruits.", {
+const model = createLanguageModel();
+const json = await model.prompt("List 3 fruits as JSON.", {
   responseConstraint: { type: "array", items: { type: "string" } },
 });
-JSON.parse(json); // ["apple", "banana", "cherry"]
+
+const fruits = JSON.parse(json);
 ```
 
-## Model status / download UI
+## Download And Status
 
-Every controller is a `useSyncExternalStore`-shaped store (`subscribe` / `getSnapshot`), so you can drive any UI:
+Every controller exposes the same store:
 
 ```ts
-import { createSummarizer } from "use-chrome-ai";
-
-const s = createSummarizer();
-const unsubscribe = s.subscribe(() => {
-  const { availability, phase, downloadProgress } = s.getSnapshot();
-  // availability: 'unavailable' | 'downloadable' | 'downloading' | 'available'
-  // drive your own progress UI
-});
-
-// Downloads are explicit — run()/stream() never start one. Trigger it from a click:
-button.onclick = () => s.download();   // requires a user gesture; throws ActivationRequiredError otherwise
+controller.subscribe(onChange);
+controller.getSnapshot();
+controller.getServerSnapshot();
 ```
 
-## API reference
+The snapshot contains:
+
+```ts
+interface ControllerState {
+  supported: boolean;
+  availability: "unavailable" | "downloadable" | "downloading" | "available";
+  phase: "idle" | "creating" | "running" | "streaming" | "error";
+  downloadProgress: number;
+  error: Error | null;
+}
+```
+
+If availability is `"downloadable"`, call `controller.download()` from your download
+button. Chrome's
+[model download guide](https://developer.chrome.com/docs/ai/inform-users-of-model-download)
+and [model management guide](https://developer.chrome.com/docs/ai/understand-built-in-model-management)
+cover the browser behavior behind that state.
+
+## Reference
 
 Import from `use-chrome-ai`:
 
 ```ts
 import {
-  createChat, createLanguageModel,
-  createSummarizer, createWriter, createRewriter,
-  createTranslator, createProofreader, createLanguageDetector,
-  isSupported, isApiSupported,
-  drainStream, isAbortError,
-  type Availability, type ControllerState,
+  createChat,
+  createLanguageModel,
+  createSummarizer,
+  createWriter,
+  createRewriter,
+  createProofreader,
+  createTranslator,
+  createLanguageDetector,
+  isSupported,
+  isApiSupported,
+  drainStream,
+  isAbortError,
+  type Availability,
+  type ControllerState,
 } from "use-chrome-ai";
 ```
 
-Types are written in TypeScript shorthand. `create*` functions reject on failure (imperative control).
-
-### Factories
-
-Each returns a controller implementing `BaseController` (below) plus its own methods.
+### Controllers
 
 ```ts
+interface BaseController {
+  subscribe(onChange: () => void): () => void;
+  getSnapshot(): ControllerState;
+  getServerSnapshot(): ControllerState;
+  refresh(): Promise<Availability>;
+  warm(opts?: { signal?: AbortSignal }): Promise<unknown>;
+  download(opts?: { signal?: AbortSignal }): Promise<unknown>;
+  invalidate(): void;
+  destroy(): void;
+}
+
 createChat(options?: ChatOptions): BaseController & {
   readonly messages: { role: "user" | "assistant"; content: string }[];
   send(text: string, opts?: { signal?: AbortSignal }): AsyncGenerator<string>;
   reset(): void;
-}
+};
 
 createLanguageModel(options?: LanguageModelOptions): BaseController & {
-  prompt(input: string, opts?: { signal?: AbortSignal; responseConstraint?: object }): Promise<string>;
+  prompt(input: string, opts?: PromptOptions): Promise<string>;
   promptStream(input: string, opts?: { signal?: AbortSignal }): AsyncGenerator<string>;
-}
-
-createSummarizer(options?: SummarizerOptions): TaskController<{ text: string; context?: string }>;
-createWriter(options?: WriterOptions):         TaskController<{ prompt: string; context?: string }>;
-createRewriter(options?: RewriterOptions):     TaskController<{ text: string; context?: string }>;
-createTranslator(pair: { sourceLanguage: string; targetLanguage: string }): TaskController<{ text: string }>;
-
-createProofreader(options?: ProofreaderOptions): BaseController & {
-  proofread(text: string, signal?: AbortSignal): Promise<ProofreadResult>;   // serialized internally
-}
-createLanguageDetector(options?): BaseController & {
-  detect(text: string, signal?: AbortSignal): Promise<DetectResult[]>;
-}
+};
 
 interface TaskController<P> extends BaseController {
-  run(params: P, signal?: AbortSignal): Promise<string>;            // non-streaming
+  run(params: P, signal?: AbortSignal): Promise<string>;
   stream(params: P, signal?: AbortSignal): AsyncGenerator<string>;
 }
 
-interface BaseController {
-  subscribe(onChange: () => void): () => void;   // useSyncExternalStore-shaped
-  getSnapshot(): ControllerState;
-  getServerSnapshot(): ControllerState;
-  refresh(): Promise<Availability>;              // re-check availability
-  warm(opts?: { signal?: AbortSignal }): Promise<unknown>;     // open a session; never downloads
-  download(opts?: { signal?: AbortSignal }): Promise<unknown>; // download the model — call from a gesture
-  invalidate(): void;                            // drop session + re-check (eviction recovery)
-  destroy(): void;
-}
+createSummarizer(options?: SummarizerOptions): TaskController<{ text: string; context?: string }>;
+createWriter(options?: WriterOptions): TaskController<{ prompt: string; context?: string }>;
+createRewriter(options?: RewriterOptions): TaskController<{ text: string; context?: string }>;
+createTranslator(pair: TranslatorPair): TaskController<{ text: string }>;
+
+createProofreader(options?: ProofreaderOptions): BaseController & {
+  proofread(text: string, signal?: AbortSignal): Promise<ProofreadResult>;
+};
+
+createLanguageDetector(options?: LanguageDetectorOptions): BaseController & {
+  detect(text: string, signal?: AbortSignal): Promise<DetectResult[]>;
+};
 ```
 
-### Create-time options
+### Common Options
 
 ```ts
 interface ChatOptions {
-  system?: string;                      // default: "You are a helpful assistant."
+  system?: string;
   initialMessages?: { role: "user" | "assistant"; content: string }[];
   topK?: number;
   temperature?: number;
-  expectedInputs?: { type: string; languages?: string[] }[];
-  expectedOutputs?: { type: string; languages?: string[] }[];
 }
 
 interface LanguageModelOptions {
-  system?: string;                      // shorthand for a single system message (index 0)
+  system?: string;
   initialPrompts?: { role: "system" | "user" | "assistant"; content: string }[];
   topK?: number;
   temperature?: number;
-  expectedInputs?: { type: string; languages?: string[] }[];
-  expectedOutputs?: { type: string; languages?: string[] }[];
 }
 
 interface SummarizerOptions {
-  type?: "tldr" | "key-points" | "teaser" | "headline";   // default "tldr"
-  format?: "plain-text" | "markdown";                      // default "plain-text"
-  length?: "short" | "medium" | "long";                    // default "short"
+  type?: "tldr" | "key-points" | "teaser" | "headline";
+  format?: "plain-text" | "markdown";
+  length?: "short" | "medium" | "long";
   sharedContext?: string;
-  expectedInputLanguages?: string[];                       // default ["en"]
-  outputLanguage?: string;                                 // default "en"
 }
 
 interface WriterOptions {
-  tone?: "formal" | "neutral" | "casual";   // default "neutral"
-  format?: "plain-text" | "markdown";        // default "plain-text"
-  length?: "short" | "medium" | "long";      // default "medium"
+  tone?: "formal" | "neutral" | "casual";
+  format?: "plain-text" | "markdown";
+  length?: "short" | "medium" | "long";
   sharedContext?: string;
-  expectedInputLanguages?: string[];
-  outputLanguage?: string;
 }
 
 interface RewriterOptions {
-  tone?: "as-is" | "more-formal" | "more-casual";   // default "as-is"
-  format?: "as-is" | "plain-text" | "markdown";      // default "as-is"
-  length?: "as-is" | "shorter" | "longer";           // default "as-is"
+  tone?: "as-is" | "more-formal" | "more-casual";
+  format?: "as-is" | "plain-text" | "markdown";
+  length?: "as-is" | "shorter" | "longer";
   sharedContext?: string;
-  expectedInputLanguages?: string[];
-  outputLanguage?: string;
 }
 
-interface ProofreaderOptions {
-  expectedInputLanguages?: string[];
-  includeCorrectionTypes?: boolean;
-  includeCorrectionExplanations?: boolean;
-  correctionExplanationLanguage?: string;
+interface TranslatorPair {
+  sourceLanguage: string;
+  targetLanguage: string;
 }
 ```
 
-### Utilities
+Language hints are also supported. LanguageModel uses `expectedInputs` and
+`expectedOutputs`; task APIs use `expectedInputLanguages` and `outputLanguage`; Translator
+uses `sourceLanguage` and `targetLanguage`.
+
+### Errors
+
+Core controller methods reject so imperative code can decide what to do.
 
 ```ts
-isSupported(): boolean;                 // any built-in AI global exists
-isApiSupported(api: ChromeAiApi): boolean;
-type ChromeAiApi = "languageModel" | "summarizer" | "writer" | "rewriter"
-                 | "proofreader" | "translator" | "languageDetector";
-
-normalizeAvailability(raw: string): Availability;
-drainStream(stream: ReadableStream<string>): AsyncGenerator<string>;
-isAbortError(err: unknown): boolean;
-readUsage(session: unknown): { used: number; quota: number; remaining: number } | null; // volatile
-
-// Advanced: the lifecycle seam every adapter binds to
-class SessionLifecycle<TSession> { /* … */ }
-store(life: SessionLifecycle): BaseController;
+class UnavailableError extends Error {}
+class ActivationRequiredError extends Error {}
+class ContextFullError extends Error {}
 ```
 
-### Types & errors
+`AbortError` is treated as cancellation. Use `isAbortError(error)` if you need to branch on
+it.
 
-```ts
-type Availability = "unavailable" | "downloadable" | "downloading" | "available";
-type Phase = "idle" | "creating" | "running" | "streaming" | "error";
-
-interface ControllerState {
-  supported: boolean;
-  availability: Availability;
-  phase: Phase;
-  downloadProgress: number;   // 0..1
-  error: Error | null;
-}
-
-interface ProofreadResult {
-  correctedInput: string;
-  corrections: {
-    startIndex: number;
-    endIndex: number;
-    correction: string;       // replacement for input.slice(startIndex, endIndex)
-    types?: string[];         // often absent (not in the current Chrome origin trial)
-    explanation?: string;
-  }[];
-}
-
-interface DetectResult { detectedLanguage: string; confidence: number }   // confidence 0..1
-
-class ChromeAiError extends Error {}
-class UnavailableError extends ChromeAiError {}        // API absent or availability 'unavailable'
-class ActivationRequiredError extends ChromeAiError {} // model needs downloading first (call download() from a gesture)
-class ContextFullError extends ChromeAiError {}        // chat exceeded context window (call reset())
-```
-
-Framework adapters: [React hooks](./react.md) · [Vue composables](./vue.md). Back to the [project README](../README.md).
+Framework docs: [React](./react.md) | [Vue](./vue.md). Back to the
+[project README](../README.md).

@@ -1,86 +1,115 @@
 # @use-chrome-ai/vue
 
-Vue composables for [Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in) (Gemini Nano). On-device, streaming, with availability gating and model-download progress handled for you. Built on the framework-agnostic [`use-chrome-ai`](./core.md) core, which it re-exports.
+Vue composables for [Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in).
+The package depends on and re-exports [`use-chrome-ai`](./core.md), so you can use the
+chat composable and the core factories from one import path.
 
 ```bash
-npm i @use-chrome-ai/vue   # pulls in use-chrome-ai automatically
+npm i @use-chrome-ai/vue
 ```
 
-`vue` is a peer dependency (>=3).
+`vue` is a peer dependency (`>=3`).
 
-> Built-in AI is desktop Chrome only and partly behind flags/origin trials — see [Get started with built-in AI](https://developer.chrome.com/docs/ai/get-started). Check `model.isUnavailable` and render a fallback when it's missing.
+For Chrome setup, API status, and model behavior, use Chrome's
+[Get started](https://developer.chrome.com/docs/ai/get-started),
+[API status](https://developer.chrome.com/docs/ai/built-in-apis), and
+[model download](https://developer.chrome.com/docs/ai/inform-users-of-model-download)
+docs.
 
-## A streaming chatbot
+## Chat
 
 ```vue
 <script setup lang="ts">
 import { useChat } from "@use-chrome-ai/vue";
 import { ref } from "vue";
 
-const { messages, isStreaming, model, send, stop, reset } = useChat({
+const input = ref("");
+const { messages, isStreaming, model, send, stop } = useChat({
   system: "You are a helpful assistant.",
 });
-
-const input = ref("");
 
 function onSubmit() {
   const text = input.value;
   input.value = "";
-  void send(text); // streams the reply into `messages`
+  void send(text);
 }
 </script>
 
 <template>
-  <p v-if="model.isUnavailable">Built-in AI isn't available in this browser.</p>
-  <template v-else>
-    <!-- Download once, on an explicit click — a normal send() never auto-downloads. -->
-    <button v-if="model.availability === 'downloadable'" type="button" @click="model.download()">
-      Enable on-device AI
-    </button>
-    <progress v-else-if="model.isDownloading" :value="model.progress" max="1" />
-    <div v-for="(m, i) in messages" :key="i"><b>{{ m.role }}:</b> {{ m.content }}</div>
-    <form @submit.prevent="onSubmit">
-      <input v-model="input" :disabled="isStreaming || !model.isReady" />
-      <button v-if="isStreaming" type="button" @click="stop">Stop</button>
-      <button v-else type="submit" :disabled="!model.isReady">Send</button>
-    </form>
-  </template>
+  <p v-if="model.isUnavailable">Built-in AI is not available here.</p>
+
+  <button v-else-if="model.availability === 'downloadable'" type="button" @click="model.download()">
+    Enable on-device AI
+  </button>
+
+  <progress v-else-if="model.isDownloading" :value="model.progress" max="1" />
+
+  <form v-else @submit.prevent="onSubmit">
+    <p v-for="(message, index) in messages" :key="index">
+      <b>{{ message.role }}:</b> {{ message.content }}
+    </p>
+    <input v-model="input" :disabled="isStreaming" />
+    <button type="submit" :disabled="isStreaming">Send</button>
+    <button v-if="isStreaming" type="button" @click="stop">Stop</button>
+  </form>
 </template>
 ```
 
-`useChat` returns `model` (a computed `ModelStatus` ref), `messages`, `isStreaming`, `error`, plus `send(text)`, `stop()`, and `reset()`. `send` never rejects — read `error`. Call `model.download()` from a click to download the model; a normal `send` never does.
+`send()` streams the reply into `messages` and never rejects. Read `error` for failures and
+call `stop()` to abort.
 
-## Model status for any controller
+## Model Status
 
-`useModelStatus` binds any core controller's status to a Vue ref — the same `subscribe`/`getSnapshot` store the React hooks use:
+`useChat` returns `model`, a computed ref with availability, progress, readiness booleans,
+and `download()`:
 
 ```ts
-import { createSummarizer } from "@use-chrome-ai/vue"; // core re-exported
-import { useModelStatus } from "@use-chrome-ai/vue";
+model.value.availability; // "unavailable" | "downloadable" | "downloading" | "available"
+model.value.isReady;
+model.value.download(); // wire this to your download button
+```
 
-const summarizer = createSummarizer({ type: "key-points" });
-const status = useModelStatus(summarizer); // Ref<ControllerState>
+In templates, Vue unwraps the ref, so `model.isReady` works as shown above.
+
+## Core Controllers
+
+This adapter currently ships `useChat` and `useModelStatus`. The rest of the APIs are
+available through the re-exported core.
+
+```ts
+import { createSummarizer, useModelStatus } from "@use-chrome-ai/vue";
+
+const summarizer = createSummarizer({ type: "key-points", length: "short" });
+const status = useModelStatus(summarizer);
+
 const summary = await summarizer.run({ text: article });
 ```
+
+Use `status.value.availability` to show a download button, progress, or fallback for any
+core controller. Chrome's API pages cover the underlying browser behavior:
+[Prompt](https://developer.chrome.com/docs/ai/prompt-api),
+[Summarizer](https://developer.chrome.com/docs/ai/summarizer-api),
+[Writer](https://developer.chrome.com/docs/ai/writer-api),
+[Rewriter](https://developer.chrome.com/docs/ai/rewriter-api),
+[Proofreader](https://developer.chrome.com/docs/ai/proofreader-api),
+[Translator](https://developer.chrome.com/docs/ai/translator-api), and
+[Language Detector](https://developer.chrome.com/docs/ai/language-detection).
 
 ## Signatures
 
 ```ts
 useChat(options?: ChatOptions): {
-  model: ComputedRef<ModelStatus>;   // availability, progress, isReady, isDownloading, download()
+  model: ComputedRef<ModelStatus>;
   messages: Ref<{ role: "user" | "assistant"; content: string }[]>;
   isStreaming: Ref<boolean>;
-  error: Ref<Error | null>;
+  error: ComputedRef<Error | null>;
   send(text: string): Promise<void>;
   stop(): void;
   reset(): void;
-}
+};
 
-useModelStatus<S>(store: Store<S>): Readonly<Ref<S>>;   // bind any controller to a Vue ref
+useModelStatus<S>(store: Store<S>): Readonly<Ref<S>>;
 ```
 
-`ChatOptions`, `ControllerState`, and `ModelStatus` are defined in the [core reference](./core.md#api-reference).
-
-## Beyond chat
-
-This adapter ships `useChat` + `useModelStatus`. The full core is re-exported, so the other six APIs are available as factories (`createSummarizer`, `createTranslator`, …) bound with `useModelStatus`. See the [core quick start](./core.md) for their shapes and signatures, and the [project README](../README.md).
+`ChatOptions`, `ModelStatus`, `ControllerState`, and core factory signatures are in the
+[core reference](./core.md#reference). Back to the [project README](../README.md).

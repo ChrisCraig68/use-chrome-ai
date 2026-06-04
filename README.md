@@ -1,125 +1,105 @@
 # use-chrome-ai
 
-Headless, framework-agnostic primitives + framework adapters for [Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in) (Gemini Nano). Runs on-device — no API keys, no server, nothing leaves the browser. The library is logic only: **you build the UI.**
+Headless primitives for [Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in)
+(Gemini Nano). It runs in the browser, needs no API key, and ships no UI.
 
-It wraps all seven built-in AI APIs and handles the awkward parts — availability gating, model-download progress, streaming, abort, and recovering when Chrome evicts the model mid-session.
+Use the framework-agnostic core, or the React/Vue adapters built on top of it. This
+library handles the wrapper work: availability state, download progress, streaming,
+aborts, and session recovery. For Chrome setup, API status, and model behavior, use the
+[Chrome built-in AI docs](https://developer.chrome.com/docs/ai/built-in).
 
 ```bash
-npm i use-chrome-ai            # framework-agnostic core (vanilla JS). Zero deps.
-npm i @use-chrome-ai/react     # React hooks (pulls in the core)
-npm i @use-chrome-ai/vue       # Vue composables (pulls in the core)
+npm i use-chrome-ai
+npm i @use-chrome-ai/react
+npm i @use-chrome-ai/vue
 ```
 
-| Package | For | Quick start |
+| Package | Use it for | Docs |
 | --- | --- | --- |
-| [`use-chrome-ai`](packages/core/README.md) | Framework-agnostic core (vanilla JS). Zero deps. | [Core →](docs/core.md) |
-| [`@use-chrome-ai/react`](packages/react/README.md) | React hooks. Depends on + re-exports the core. | [React →](docs/react.md) |
-| [`@use-chrome-ai/vue`](packages/vue/README.md) | Vue composables. Depends on + re-exports the core. | [Vue →](docs/vue.md) |
+| [`use-chrome-ai`](packages/core/README.md) | Vanilla JS, shared core, or another framework | [Core quick start](docs/core.md) |
+| [`@use-chrome-ai/react`](packages/react/README.md) | React hooks | [React quick start](docs/react.md) |
+| [`@use-chrome-ai/vue`](packages/vue/README.md) | Vue composables | [Vue quick start](docs/vue.md) |
 
-Each adapter re-exports the core, so you can import the hooks and the `create*`/`isSupported` helpers from one place.
+Adapters re-export the core, so a React app can import both `useChat` and
+`createSummarizer` from `@use-chrome-ai/react`, and a Vue app can do the same from
+`@use-chrome-ai/vue`.
 
-> **Heads up — built-in AI is still rolling out.** Some APIs are stable in Chrome 138+; others are behind a flag or origin trial, and it's desktop Chrome only with real hardware requirements. Treat it as progressive enhancement: this library never throws on an unsupported browser — it reports an `unavailable` state so you can render a fallback. It's a good fit for prototyping on-device AI on Chrome. See Google's [Get started with built-in AI](https://developer.chrome.com/docs/ai/get-started).
-
----
-
-## A streaming chatbot, in one hook
+## Quick Example
 
 ```tsx
 import { useChat } from "@use-chrome-ai/react";
 
 export function Chat() {
-  const { messages, input, setInput, send, stop, isStreaming, model } =
-    useChat({ system: "You are a helpful assistant." });
+  const { messages, input, setInput, send, stop, isStreaming, model } = useChat();
 
-  if (model.isUnavailable) return <p>Built-in AI isn't available in this browser.</p>;
-
-  // The model downloads once, on an explicit click — not as a side effect of sending.
-  if (model.availability === "downloadable")
+  if (model.isUnavailable) return <p>Built-in AI is not available here.</p>;
+  if (model.availability === "downloadable") {
     return <button onClick={() => model.download()}>Enable on-device AI</button>;
-  if (model.isDownloading) return <progress value={model.progress} />;
+  }
+  if (model.isDownloading) return <progress value={model.progress} max={1} />;
 
   return (
-    <div>
-      {messages.map((m, i) => (
-        <p key={i}><b>{m.role}:</b> {m.content}</p>
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        void send();
+      }}
+    >
+      {messages.map((message, index) => (
+        <p key={index}>
+          <b>{message.role}:</b> {message.content}
+        </p>
       ))}
-      <form onSubmit={(e) => { e.preventDefault(); send(); }}>
-        <input value={input} onChange={(e) => setInput(e.target.value)} disabled={isStreaming} />
-        <button type="submit">Send</button>
-        {isStreaming && <button type="button" onClick={stop}>Stop</button>}
-      </form>
-    </div>
+      <input value={input} onChange={(event) => setInput(event.target.value)} />
+      <button type="submit" disabled={isStreaming}>
+        Send
+      </button>
+      {isStreaming && (
+        <button type="button" onClick={stop}>
+          Stop
+        </button>
+      )}
+    </form>
   );
 }
 ```
 
-Click **Enable on-device AI** once to download the model (with progress); after that, `send()` streams the reply token-by-token into `messages`. `stop()` aborts. That's the whole chatbot.
+## Chrome Docs
 
-### Same thing, no framework
+Chrome owns the platform details; this repo keeps the wrapper API focused.
 
-```ts
-import { createChat } from "use-chrome-ai";
+- [Built-in AI overview](https://developer.chrome.com/docs/ai/built-in)
+- [API status](https://developer.chrome.com/docs/ai/built-in-apis)
+- [Get started](https://developer.chrome.com/docs/ai/get-started)
+- [Inform users of model download](https://developer.chrome.com/docs/ai/inform-users-of-model-download)
+- [Model management in Chrome](https://developer.chrome.com/docs/ai/understand-built-in-model-management)
 
-const chat = createChat({ system: "You are a helpful assistant." });
+In this library, gate UI with `model.isUnavailable`, show a download button when
+`model.availability === "downloadable"`, and call `model.download()` from that button.
 
-// One-time: download the model from a click (Chrome requires a user gesture).
-downloadBtn.onclick = () => chat.download();
+## APIs
 
-// Once it's ready, stream replies:
-sendBtn.onclick = async () => {
-  for await (const delta of chat.send(input.value)) {
-    output.textContent += delta; // stream deltas into the DOM
-  }
-};
-```
-
----
-
-## What's covered
-
-One hook (React) / composable (Vue) / factory (core) per API:
-
-| API | Core factory | React hook | Vue |
+| API | Core | React | Vue |
 | --- | --- | --- | --- |
 | [LanguageModel / Prompt](https://developer.chrome.com/docs/ai/prompt-api) | `createChat`, `createLanguageModel` | `useChat`, `usePrompt` | `useChat` |
-| [Summarizer](https://developer.chrome.com/docs/ai/summarizer-api) | `createSummarizer` | `useSummarizer` | — |
-| [Writer](https://developer.chrome.com/docs/ai/writer-api) | `createWriter` | `useWriter` | — |
-| [Rewriter](https://developer.chrome.com/docs/ai/rewriter-api) | `createRewriter` | `useRewriter` | — |
-| [Proofreader](https://developer.chrome.com/docs/ai/proofreader-api) | `createProofreader` | `useProofreader` | — |
-| [Translator](https://developer.chrome.com/docs/ai/translator-api) | `createTranslator` | `useTranslator` | — |
-| [Language Detector](https://developer.chrome.com/docs/ai/language-detection) | `createLanguageDetector` | `useLanguageDetector` | — |
-
-The Vue adapter currently ships `useChat` + `useModelStatus`; everything else is available through the re-exported core. See the per-framework quick starts for usage and signatures.
-
-## Two things to know
-
-**Model download is explicit.** The first use needs multi-gigabyte weights, and Chrome only starts that download from a click/tap. A normal call (`send`, `summarize`, …) never downloads on its own — gate a "Download model" button on `model.availability === "downloadable"` and call `model.download()` from its click handler. Until the model is ready, actions throw `ActivationRequiredError`.
-
-**`availability` drives your UI.** It's one of `unavailable` · `downloadable` · `downloading` · `available`. `phase` (`idle` · `creating` · `running` · `streaming` · `error`) is what the controller is doing right now. The hooks group these under a `model` object — `model.availability`, `model.isReady`, `model.isDownloading`, `model.progress`, `model.download()`.
-
-The hooks are SSR-safe — on the server they report `unavailable`, so Next.js/Remix render your fallback and upgrade on the client.
-
----
+| [Summarizer](https://developer.chrome.com/docs/ai/summarizer-api) | `createSummarizer` | `useSummarizer` | Core re-export |
+| [Writer](https://developer.chrome.com/docs/ai/writer-api) | `createWriter` | `useWriter` | Core re-export |
+| [Rewriter](https://developer.chrome.com/docs/ai/rewriter-api) | `createRewriter` | `useRewriter` | Core re-export |
+| [Proofreader](https://developer.chrome.com/docs/ai/proofreader-api) | `createProofreader` | `useProofreader` | Core re-export |
+| [Translator](https://developer.chrome.com/docs/ai/translator-api) | `createTranslator` | `useTranslator` | Core re-export |
+| [Language Detector](https://developer.chrome.com/docs/ai/language-detection) | `createLanguageDetector` | `useLanguageDetector` | Core re-export |
 
 ## Demos
 
-`examples/` has two standalone apps that import the packages from source:
-
 ```bash
 pnpm install
-pnpm dev:react    # React demos  → http://localhost:5173
-pnpm dev:vue      # Vue demo     → http://localhost:5174
+pnpm dev:react
+pnpm dev:vue
 ```
 
-Run them in desktop Chrome with built-in AI enabled to see the model path; in any other browser they render the `unavailable` fallback.
-
----
-
-## Documentation
-
-- Quick starts (usage + signatures): [core](docs/core.md) · [React](docs/react.md) · [Vue](docs/vue.md)
-- [`llms.txt`](llms.txt) — a machine-readable map of the project for AI assistants.
-- [AGENTS.md](AGENTS.md) — guidance for coding agents working in this repo.
+React runs at <http://localhost:5173>; Vue runs at <http://localhost:5174>. See Chrome's
+[Get started](https://developer.chrome.com/docs/ai/get-started) guide for the browser
+setup needed to exercise the real model path.
 
 ## License
 
