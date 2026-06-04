@@ -155,8 +155,7 @@ export function SmartTooltip() {
                   fontSize: 15,
                   lineHeight: 1.55,
                   whiteSpace: "pre-wrap",
-                  maxHeight: 200,
-                  minHeight: 22,
+                  maxHeight: "40vh",
                   overflow: "auto",
                 }}
               >
@@ -204,11 +203,17 @@ export function SmartTooltip() {
 
 function popoverPosition(rect: DOMRect): CSSProperties {
   const width = 340;
-  return {
+  const gap = 8;
+  const base: CSSProperties = {
     position: "fixed",
-    top: Math.min(rect.bottom + 8, window.innerHeight - 260),
     left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
     width,
     zIndex: 1000,
   };
+  // Flip above the selection when there isn't enough room below, anchoring by `bottom`
+  // so an auto-height popover grows upward and never clips at the viewport bottom.
+  if (window.innerHeight - rect.bottom < 280) {
+    return { ...base, bottom: Math.max(8, window.innerHeight - rect.top + gap) };
+  }
+  return { ...base, top: rect.bottom + gap };
 }

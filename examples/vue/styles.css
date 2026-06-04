@@ -60,7 +60,9 @@ a:hover {
 .app {
   max-width: 680px;
   margin: 0 auto;
-  padding: 56px 24px 120px;
+  /* Generous bottom space so a selection low on the page still has scroll room and the
+     tooltip isn't pinned against the viewport edge. */
+  padding: 56px 24px 220px;
 }
 
 /* header */
