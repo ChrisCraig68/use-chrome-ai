@@ -61,6 +61,31 @@ export function Chat() {
 Hooks never reject. They update `error`, stream text into state, and expose `stop()` for
 the in-flight request.
 
+## Error Handling
+
+Read `error` from the hook you are using and render from that state. For chat, reset the
+conversation when the model reports a full context window:
+
+```tsx
+import { useChat } from "@use-chrome-ai/react";
+
+export function ChatError() {
+  const { error, reset } = useChat();
+
+  if (!error) return null;
+
+  if (error.name === "ContextFullError") {
+    return (
+      <p role="alert">
+        This conversation is full. <button onClick={reset}>Start over</button>
+      </p>
+    );
+  }
+
+  return <p role="alert">{error.message}</p>;
+}
+```
+
 ## Model Status
 
 Every hook returns a `model` object:

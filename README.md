@@ -24,7 +24,7 @@ Adapters re-export the core, so a React app can import both `useChat` and
 `createSummarizer` from `@use-chrome-ai/react`, and a Vue app can do the same from
 `@use-chrome-ai/vue`.
 
-## Quick Example
+## Quick Example - Chat Bot With One Hook
 
 ```tsx
 import { useChat } from "@use-chrome-ai/react";
