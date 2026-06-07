@@ -1,5 +1,11 @@
 # use-chrome-ai
 
+## 0.1.2
+
+### Patch Changes
+
+- 8ba060f: Improve npm README copy with live demo links, one-hook chat examples, and clearer package positioning.
+
 ## 0.1.1
 
 ### Patch Changes

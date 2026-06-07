@@ -1,6 +1,6 @@
 {
   "name": "use-chrome-ai",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Headless, framework-agnostic primitives for Chrome's built-in AI (Gemini Nano): Prompt, Summarizer, Writer, Rewriter, Proofreader, Translator, Language Detector. Zero dependencies.",
   "license": "MIT",
   "repository": {
