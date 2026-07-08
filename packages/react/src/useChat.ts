@@ -3,7 +3,9 @@ import { type ChatMessage, type ChatOptions, createChat, isAbortError } from "us
 import { type AiStatus, optionsKey, useAiStatus, useController } from "./internal";
 
 export interface ChatHook extends AiStatus {
-  /** The conversation transcript. */
+  /** The conversation transcript. The user's turn appears as soon as `send()` is
+   *  called; while `isStreaming` is true and the last entry is the user's, the
+   *  reply hasn't started yet (render a "thinking…" indicator off that). */
   messages: ChatMessage[];
   /** Controlled input value (optional convenience). */
   input: string;
@@ -57,6 +59,11 @@ export function useChat(options: ChatOptions = {}): ChatHook {
       ac.current = next;
       setError(null);
       setStreaming(true);
+      // The controller appends the user turn only once the session is warm — on a cold
+      // start that gap is long enough to make the UI look frozen. Publish the turn now;
+      // every later sync (per delta, and the `finally` below) replaces this snapshot
+      // with the controller's transcript, so a failed send leaves no stray message.
+      setMessages([...controller.messages, { role: "user", content }]);
       try {
         for await (const _delta of controller.send(content, { signal: next.signal })) {
           // The controller mutates its `messages` array in place; copy it into state
