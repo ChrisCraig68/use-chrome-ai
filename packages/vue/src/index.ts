@@ -70,6 +70,9 @@ export function useChat(options: ChatOptions = {}): UseChatReturn {
     ac = new AbortController();
     error.value = null;
     isStreaming.value = true;
+    // Mirror the React useChat: the controller appends the user turn only once the
+    // session is warm, so publish it now. Every later sync replaces this snapshot.
+    messages.value = [...chat.messages, { role: "user", content }];
     try {
       for await (const _delta of chat.send(content, { signal: ac.signal })) {
         messages.value = chat.messages.slice();

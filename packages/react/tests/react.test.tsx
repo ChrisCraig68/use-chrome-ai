@@ -71,6 +71,38 @@ describe("React hooks", () => {
     });
   });
 
+  it("useChat renders the user turn before the session is warm", async () => {
+    const api = makeFakeApi({ deltas: ["Hel", "lo"] });
+    // Gate session creation so we can observe the transcript mid-warm-up — the
+    // window where the sent message used to stay invisible until the first token.
+    let releaseCreate = () => {};
+    const gate = new Promise<void>((resolve) => {
+      releaseCreate = resolve;
+    });
+    const innerCreate = api.Ctor.create.getMockImplementation();
+    api.Ctor.create.mockImplementation(async (o) => {
+      await gate;
+      return innerCreate?.(o);
+    });
+    cleanups.push(installGlobal("LanguageModel", api.Ctor));
+
+    render(<ChatProbe />);
+    fireEvent.click(screen.getByText("send"));
+
+    // create() is still pending: the user's message must already be in the transcript.
+    await waitFor(() => {
+      expect(screen.getAllByTestId("msg").map((n) => n.textContent)).toEqual(["user:hi"]);
+    });
+
+    releaseCreate();
+    await waitFor(() => {
+      expect(screen.getAllByTestId("msg").map((n) => n.textContent)).toEqual([
+        "user:hi",
+        "assistant:Hello",
+      ]);
+    });
+  });
+
   it("useChat reports unavailable (no throw) when built-in AI is absent", () => {
     // No global installed.
     render(<ChatProbe />);
