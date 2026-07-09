@@ -3,7 +3,8 @@
  * The member names were renamed once already and differ by API family:
  *   - LanguageModel (current):  contextUsage / contextWindow / measureContextUsage()
  *   - LanguageModel (legacy):   inputUsage  / inputQuota    / measureInputUsage()
- *   - Task APIs (Summarizer…):  inputUsage  / inputQuota    / measureInputUsage()
+ *   - Task APIs (Summarizer…):  inputQuota / measureInputUsage() (no usage attribute —
+ *     task invocations are stateless, so readUsage() returns null for them)
  * We read both families (current first) so any future rename's blast radius is this
  * one file. This is intentionally NOT part of the default hook surface — power users
  * reach a raw session via the escape hatch and call `readUsage(session)`.

@@ -1,6 +1,7 @@
 import type { Availability } from "./types";
 
-/** Maps the spec's availability strings (current + legacy) to our union. */
+/** Maps availability strings — the spec's four values plus Chrome's legacy pre-spec
+ *  strings ("readily"/"after-download"/"no", from the window.ai era) — to our union. */
 export function normalizeAvailability(raw: string): Availability {
   switch (raw) {
     case "available":
@@ -17,8 +18,8 @@ export function normalizeAvailability(raw: string): Availability {
   }
 }
 
-/** Every Chrome built-in AI API, by the lowercase name we use in our public API. */
-export type ChromeAiApi =
+/** Every built-in AI API, by the lowercase name we use in our public API. */
+export type BuiltInAiApi =
   | "languageModel"
   | "summarizer"
   | "writer"
@@ -27,8 +28,12 @@ export type ChromeAiApi =
   | "translator"
   | "languageDetector";
 
-/** The global class name each API is exposed under. */
-export const GLOBAL_NAME: Record<ChromeAiApi, string> = {
+/** @deprecated Renamed {@link BuiltInAiApi} — the APIs ship in more browsers than Chrome. */
+export type ChromeAiApi = BuiltInAiApi;
+
+/** The global class name each API is exposed under (per the Web Machine Learning CG
+ *  specs — the same classes in every implementing browser: Chrome, Edge, and future ones). */
+export const GLOBAL_NAME: Record<BuiltInAiApi, string> = {
   languageModel: "LanguageModel",
   summarizer: "Summarizer",
   writer: "Writer",
@@ -45,7 +50,7 @@ export function getGlobal<T = unknown>(name: string): T | undefined {
 }
 
 /** True if a specific API's global class exists in this environment. */
-export function isApiSupported(api: ChromeAiApi): boolean {
+export function isApiSupported(api: BuiltInAiApi): boolean {
   return getGlobal(GLOBAL_NAME[api]) !== undefined;
 }
 

@@ -5,8 +5,12 @@ Guidance for AI coding agents (and humans) working in this repo. For using the l
 
 ## What this is
 
-A **pnpm monorepo** publishing headless, framework-agnostic primitives for Chrome's built-in
-AI (Gemini Nano). Logic only — no UI components.
+A **pnpm monorepo** publishing headless, framework-agnostic primitives for the browsers'
+built-in AI APIs — the standardized globals (`LanguageModel`, `Summarizer`, …) shipped in
+Chrome and Edge (language-model APIs run on Gemini Nano / Phi-4-mini respectively;
+Translator and Language Detector use dedicated task models). Logic only — no UI
+components. The package names keep the historical `use-chrome-ai` prefix, but nothing in
+the code is Chrome-specific.
 
 ```
 packages/core    → "use-chrome-ai"          zero-dependency, framework-agnostic core
@@ -37,8 +41,8 @@ pnpm changeset          # record a change for the next release
 ```
 
 Always run `pnpm -r typecheck && pnpm -r test && pnpm lint` after changing code. Tests run against **mocked
-globals** (see `packages/*/tests/helpers.ts`); the real Gemini Nano path is verified manually
-in a Chrome with built-in AI enabled (`pnpm dev:react`).
+globals** (see `packages/*/tests/helpers.ts`); the real model path is verified manually
+in a browser with built-in AI enabled — Chrome and/or Edge (`pnpm dev:react`).
 
 ## Architecture (read before changing core)
 
@@ -61,12 +65,15 @@ in a Chrome with built-in AI enabled (`pnpm dev:react`).
   are independent; never collapse them.
 - **In-flight create dedup.** Concurrent `warm()`/`download()` calls share one `create()` (one download).
 - **`AbortError` is control flow, not failure.** Never `invalidate()` on it (use `isAbortError`).
-  Any *other* session-method failure calls `invalidate()` (Chrome can evict the model mid-session)
+  Any *other* session-method failure calls `invalidate()` (the browser can evict the model mid-session)
   → destroy the dead handle + re-check availability.
 - **Downloads are explicit.** A normal call (`warm()`, and the `run`/`stream`/`send`/`prompt` paths
   that route through it) never starts a download — it throws `ActivationRequiredError` while the model
   is still `downloadable`. Only `download()` starts the download, and it requires a user gesture
   (`navigator.userActivation.isActive`). Don't auto-download from effects.
+- **Spec-first, never browser-sniffed.** Feature support comes from the globals and
+  `availability()`, not the browser name. `detectBrowser()` exists solely for setup copy
+  (which vendor docs to link); do not key behavior off it.
 - **Hooks never reject** (they set `error`); **core `create*` functions DO reject** (imperative control).
 - **The token/quota surface is volatile — keep all of it in `core/src/usage.ts`.** Member names
   have been renamed once already; do not spread them across files.

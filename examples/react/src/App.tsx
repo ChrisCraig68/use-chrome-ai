@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { isSupported } from "use-chrome-ai";
+import { detectBrowser, isSupported } from "use-chrome-ai";
 import { Chat } from "./Chat";
 import { SmartTooltip } from "./SmartTooltip";
 import { Summarize } from "./Summarize";
@@ -23,21 +23,25 @@ export function App() {
         <h1>use-chrome-ai</h1>
       </header>
       <p className="lede">
-        Headless primitives for Chrome's built-in AI. These demos use the React hooks — the same
-        core also powers the <a href="vue/">Vue adapter →</a>
+        Headless primitives for the browsers' built-in AI. These demos use the React hooks — the
+        same core also powers the <a href="vue/">Vue adapter →</a>
       </p>
 
       {!supported && (
         <div className="banner">
           Built-in AI globals weren't detected in this browser. The demos still render, but AI
-          actions show the <b>unavailable</b> fallback. Use desktop Chrome with built-in AI enabled
-          — see{" "}
+          actions show the <b>unavailable</b> fallback. Use a desktop browser with built-in AI
+          enabled (Chrome or Edge) — see{" "}
           <a
-            href="https://developer.chrome.com/docs/ai/get-started"
+            href={
+              detectBrowser() === "edge"
+                ? "https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api"
+                : "https://developer.chrome.com/docs/ai/get-started"
+            }
             target="_blank"
             rel="noreferrer"
           >
-            Google's setup guide
+            the setup guide for your browser
           </a>
           .
         </div>

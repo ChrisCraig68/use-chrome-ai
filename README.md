@@ -1,21 +1,31 @@
 # use-chrome-ai
 
-Headless primitives for [Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in)
-(Gemini Nano). It runs in the browser, needs no API key, and ships no UI.
+Headless primitives for the browsers' built-in AI APIs — the standardized Prompt,
+Summarizer, Writer, Rewriter, Translator, Language Detector, and Proofreader APIs shipped
+by [Chrome](https://developer.chrome.com/docs/ai/built-in) and
+[Edge](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api). It runs
+in the browser, needs no API key, and ships no UI.
 
 Use the framework-agnostic core, or the React/Vue adapters built on top of it. This
 library handles the wrapper work: availability state, download progress, streaming,
-aborts, and session recovery. For Chrome setup, API status, and model behavior, use the
-[Chrome built-in AI docs](https://developer.chrome.com/docs/ai/built-in).
+aborts, and session recovery. For browser setup, API status, and model behavior, use the
+vendor docs linked below.
+
+**Microsoft Edge is now supported alongside Chrome.** The library targets the
+standardized globals (`LanguageModel`, `Summarizer`, …) from the
+[Web Machine Learning CG specs](https://github.com/webmachinelearning), not any one
+browser — a future browser that ships the same globals works without changes here.
+Despite the package name, nothing in it is Chrome-specific.
 
 > **▶ Live demos** — [React: Smart Tooltip · Chat · Summarizer](https://chriscraig68.github.io/use-chrome-ai/)
 > and the [Vue chat](https://chriscraig68.github.io/use-chrome-ai/vue/). They run entirely
-> on-device — open in desktop Chrome with built-in AI enabled.
+> on-device — open in a desktop browser with built-in AI enabled (Chrome or Edge).
 
 ## Motivation
 
 I started this while experimenting with Chrome's built-in AI and wanting the native APIs
-wrapped in something easy to reuse.
+wrapped in something easy to reuse. The same APIs have since shipped in Edge, so the
+library now targets the shared standard rather than one browser.
 
 It is useful for prototyping LLM features in your app without picking a vendor, signing
 up for an API key, or adopting a complex AI framework. The local model's small context
@@ -77,18 +87,43 @@ export function Chat() {
 }
 ```
 
-## Chrome Docs
+## Browser Support
 
-Chrome owns the platform details; this repo keeps the wrapper API focused.
+The browsers own the platform details; this repo keeps the wrapper API focused. Status
+as of mid-2026 (it changes quickly — check the vendor docs):
 
-- [Built-in AI overview](https://developer.chrome.com/docs/ai/built-in)
-- [API status](https://developer.chrome.com/docs/ai/built-in-apis)
-- [Get started](https://developer.chrome.com/docs/ai/get-started)
-- [Inform users of model download](https://developer.chrome.com/docs/ai/inform-users-of-model-download)
-- [Model management in Chrome](https://developer.chrome.com/docs/ai/understand-built-in-model-management)
+| API | Chrome | Edge |
+| --- | --- | --- |
+| Prompt / LanguageModel | Stable 148+ (extensions 138+) | Canary/Dev, behind a flag |
+| Summarizer | Stable 138+ | Stable 138+, on by default |
+| Writer / Rewriter | Origin trial | Canary/Dev, behind flags |
+| Proofreader | Origin trial | 142+ Canary/Dev, behind a flag |
+| Translator | Stable 138+ | Stable 148+ |
+| Language Detector | Stable 138+ | Stable 148+ |
+
+Prompt, Summarizer, Writer, Rewriter, and Proofreader run on the browser's built-in
+language model — Gemini Nano in Chrome, Phi-4-mini in Edge (with Aion-1.0-Instruct in
+preview). Translator and Language Detector use separate task-specific models.
+
+Firefox and Safari have not shipped these APIs (both have raised standards objections);
+Brave disables the model download that backs them.
+
+- Chrome: [built-in AI overview](https://developer.chrome.com/docs/ai/built-in) ·
+  [API status](https://developer.chrome.com/docs/ai/built-in-apis) ·
+  [get started](https://developer.chrome.com/docs/ai/get-started) ·
+  [model download UX](https://developer.chrome.com/docs/ai/inform-users-of-model-download) ·
+  [model management](https://developer.chrome.com/docs/ai/understand-built-in-model-management)
+- Edge: [Prompt API](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api) ·
+  [Writing Assistance APIs](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/writing-assistance-apis) ·
+  [Translator](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/translator-api) ·
+  [Language Detector](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/languagedetector-api) ·
+  [Proofreader](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/proofreader-api)
 
 In this library, gate UI with `model.isUnavailable`, show a download button when
 `model.availability === "downloadable"`, and call `model.download()` from that button.
+Feature-detect with `isSupported()` / `isApiSupported()` — never by browser name. If you
+need to show browser-specific setup instructions, `detectBrowser()` identifies the host
+browser (`"chrome" | "edge" | "chromium" | "unknown"`).
 
 ## APIs
 
@@ -111,8 +146,9 @@ pnpm dev:vue
 ```
 
 React runs at <http://localhost:5173>; Vue runs at <http://localhost:5174>. See Chrome's
-[Get started](https://developer.chrome.com/docs/ai/get-started) guide for the browser
-setup needed to exercise the real model path.
+[Get started](https://developer.chrome.com/docs/ai/get-started) guide or Edge's
+[Prompt API docs](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api)
+for the browser setup needed to exercise the real model path.
 
 ## License
 

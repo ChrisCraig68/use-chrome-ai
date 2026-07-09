@@ -1,6 +1,8 @@
 # @use-chrome-ai/vue
 
-Vue composables for [Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in).
+Vue composables for the browsers' built-in AI APIs, as shipped in
+[Chrome](https://developer.chrome.com/docs/ai/built-in) and
+[Edge](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api).
 The package depends on and re-exports [`use-chrome-ai`](./core.md), so you can use the
 chat composable and the core factories from one import path.
 
@@ -10,11 +12,12 @@ npm i @use-chrome-ai/vue
 
 `vue` is a peer dependency (`>=3`).
 
-For Chrome setup, API status, and model behavior, use Chrome's
+For browser setup, API status, and model behavior, use Chrome's
 [Get started](https://developer.chrome.com/docs/ai/get-started),
 [API status](https://developer.chrome.com/docs/ai/built-in-apis), and
 [model download](https://developer.chrome.com/docs/ai/inform-users-of-model-download)
-docs.
+docs, or Edge's
+[built-in AI docs](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api).
 
 ## Chat
 
@@ -86,7 +89,8 @@ const summary = await summarizer.run({ text: article });
 ```
 
 Use `status.value.availability` to show a download button, progress, or fallback for any
-core controller. Chrome's API pages cover the underlying browser behavior:
+core controller. Edge's equivalents are linked from the [core doc](./core.md#browser-docs);
+Chrome's API pages cover the underlying browser behavior:
 [Prompt](https://developer.chrome.com/docs/ai/prompt-api),
 [Summarizer](https://developer.chrome.com/docs/ai/summarizer-api),
 [Writer](https://developer.chrome.com/docs/ai/writer-api),

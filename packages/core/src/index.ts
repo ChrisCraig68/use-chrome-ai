@@ -1,5 +1,7 @@
-// use-chrome-ai — framework-agnostic core. Zero dependencies. Import this in any web page
-// or framework. React hooks: "@use-chrome-ai/react". Vue composables: "@use-chrome-ai/vue".
+// use-chrome-ai — framework-agnostic core for the browsers' built-in AI APIs (Chrome,
+// Edge, and any browser shipping the standardized globals). Zero dependencies. Import
+// this in any web page or framework. React hooks: "@use-chrome-ai/react". Vue
+// composables: "@use-chrome-ai/vue".
 
 export {
   createLanguageDetector,
@@ -38,6 +40,7 @@ export {
 export { createWriter, type WriteParams, type WriterOptions } from "./apis/writer";
 // Capability detection
 export {
+  type BuiltInAiApi,
   type ChromeAiApi,
   GLOBAL_NAME,
   getGlobal,
@@ -56,12 +59,15 @@ export {
   store,
   type TaskController,
 } from "./lifecycle";
+// Browser identification (for setup copy — never gate features on it)
+export { type AiBrowser, detectBrowser } from "./provider";
 // Streaming primitives
 export { drainStream, isAbortError } from "./stream";
 // Status & errors
 export type { Availability, ControllerState, ModelStatus, Phase, Store } from "./types";
 export {
   ActivationRequiredError,
+  BuiltInAiError,
   ChromeAiError,
   ContextFullError,
   deriveModelStatus,
