@@ -9,7 +9,7 @@ import {
   UnavailableError,
 } from "./types";
 
-/** A Chrome built-in AI global class: static `availability()` + `create()`. */
+/** A built-in AI global class: static `availability()` + `create()`. */
 export interface AiCtor<TSession> {
   availability?: (opts?: unknown) => Promise<string>;
   create: (opts?: unknown) => Promise<TSession>;
@@ -33,7 +33,7 @@ export interface BaseController extends Store<ControllerState> {
   /** Open a session for an already-downloaded model; NEVER starts a download (throws
    *  {@link ActivationRequiredError} when the model is still `downloadable`). */
   warm(opts?: { signal?: AbortSignal }): Promise<unknown>;
-  /** Explicitly download the model. Call from a click/tap handler (Chrome needs a gesture). */
+  /** Explicitly download the model. Call from a click/tap handler (the browser needs a gesture). */
   download(opts?: { signal?: AbortSignal }): Promise<unknown>;
   invalidate(): void;
   destroy(): void;
@@ -54,9 +54,9 @@ const SERVER_STATE: ControllerState = Object.freeze({
   error: null,
 });
 
-/** Whether there's a transient user activation right now. Chrome requires one to
- *  *start* a model download. Missing API (non-Chromium) → assume true so we never
- *  block on a browser that wouldn't gate downloads anyway. */
+/** Whether there's a transient user activation right now. Chromium browsers require
+ *  one to *start* a model download. Missing API → assume true so we never block on
+ *  a browser that wouldn't gate downloads anyway. */
 function hasUserActivation(): boolean {
   const ua = (globalThis as { navigator?: { userActivation?: { isActive?: boolean } } }).navigator
     ?.userActivation;
@@ -64,7 +64,7 @@ function hasUserActivation(): boolean {
 }
 
 /**
- * Shared lifecycle for every Chrome AI session: `availability()` → `create({monitor})`
+ * Shared lifecycle for every built-in AI session: `availability()` → `create({monitor})`
  * → cached session, with download-progress reporting and eviction recovery. A generalized
  * adapter decoupled from any host or transport — it touches only the AI globals.
  *
@@ -170,7 +170,7 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
 
   /**
    * Explicitly download the model (and open the session). Requires a user gesture —
-   * Chrome only starts the download from one. Name it in click/tap handlers.
+   * the browser only starts the download from one. Name it in click/tap handlers.
    */
   download(opts: { signal?: AbortSignal } = {}): Promise<TSession> {
     return this.ensure(true, opts);
@@ -190,7 +190,7 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
     if (this.state.availability === "unavailable") throw new UnavailableError(this.config.api);
     // A first-time download is required only when the model is 'downloadable'. We never
     // start it from a normal call (warm) — the caller must invoke download() explicitly,
-    // and from a user gesture (Chrome's requirement). 'downloading' (join the in-flight
+    // and from a user gesture (the browser's requirement). 'downloading' (join the in-flight
     // download) and 'available' (just open a session) proceed without a fresh download.
     if (this.state.availability === "downloadable" && (!allowDownload || !hasUserActivation())) {
       throw new ActivationRequiredError(this.config.api);
@@ -207,11 +207,16 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
       ...(signal ? { signal } : {}),
       monitor: (m: EventTarget) => {
         m.addEventListener("downloadprogress", (e) => {
-          const loaded = (e as ProgressEvent).loaded;
+          const { loaded, total } = e as ProgressEvent;
+          // Chrome reports `loaded` as a 0..1 fraction (`total` unset); Edge's documented
+          // pattern is byte counts with a `total`. Normalize both to a 0..1 fraction.
+          const fraction = typeof loaded === "number" ? (total > 0 ? loaded / total : loaded) : NaN;
           this.update({
             phase: "creating",
             availability: "downloading",
-            downloadProgress: typeof loaded === "number" ? loaded : this.state.downloadProgress,
+            downloadProgress: Number.isFinite(fraction)
+              ? Math.min(1, Math.max(0, fraction))
+              : this.state.downloadProgress,
           });
         });
       },
@@ -230,9 +235,10 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
   }
 
   /**
-   * Drop the cached session and re-check availability. Chrome can evict the on-device
-   * model at any time — "even mid-session, without regard for running prompts" — leaving
-   * our handle dead. Call this on any non-abort failure of a session method.
+   * Drop the cached session and re-check availability. The browser can evict the
+   * on-device model at any time — "even mid-session, without regard for running
+   * prompts" — leaving our handle dead. Call this on any non-abort failure of a
+   * session method.
    */
   invalidate(): void {
     const s = this.current as { destroy?: () => void } | null;

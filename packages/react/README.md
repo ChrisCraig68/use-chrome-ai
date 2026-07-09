@@ -1,12 +1,12 @@
 # @use-chrome-ai/react
 
-React hooks for [Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in). Build streaming, on-device AI features with Gemini Nano in Chrome, without API keys, server calls, or a UI framework on top of React.
+React hooks for the browsers' built-in AI APIs, as shipped in [Chrome](https://developer.chrome.com/docs/ai/built-in) and [Edge](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api). Build streaming, on-device AI features without API keys, server calls, or a UI framework on top of React.
 
-> **Live demo:** [Smart Tooltip, Chat, and Summarizer](https://chriscraig68.github.io/use-chrome-ai/). Open it in desktop Chrome with built-in AI enabled.
+> **Live demo:** [Smart Tooltip, Chat, and Summarizer](https://chriscraig68.github.io/use-chrome-ai/). Open it in a desktop browser with built-in AI enabled (Chrome or Edge).
 
 ## Why Install It
 
-`@use-chrome-ai/react` is the quickest way to add Chrome built-in AI to a React app:
+`@use-chrome-ai/react` is the quickest way to add browser built-in AI to a React app:
 
 - One hook gives you a complete streaming chat loop.
 - Model availability, download progress, aborts, and errors are exposed as React state.
@@ -23,7 +23,7 @@ npm i @use-chrome-ai/react
 
 ## One-Hook Chat
 
-This is the main selling point: a working Chrome AI chat experience from one hook. The hook owns input state, streams assistant replies into `messages`, exposes `stop()`, and tells you when Chrome needs the model download button.
+This is the main selling point: a working on-device AI chat experience from one hook. The hook owns input state, streams assistant replies into `messages`, exposes `stop()`, and tells you when the browser needs the model download button.
 
 ```tsx
 import { useChat } from "@use-chrome-ai/react";
@@ -113,3 +113,4 @@ Hooks do not reject during normal UI use. They update `error`, keep `model` curr
 - [Project README](https://github.com/ChrisCraig68/use-chrome-ai#readme)
 - [Chrome built-in AI setup](https://developer.chrome.com/docs/ai/get-started)
 - [Chrome model download UX guide](https://developer.chrome.com/docs/ai/inform-users-of-model-download)
+- [Edge built-in AI docs](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api)

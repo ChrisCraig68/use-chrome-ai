@@ -1,12 +1,12 @@
 # @use-chrome-ai/vue
 
-Vue composables for [Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in). Add streaming, on-device Gemini Nano features to Vue 3 apps without API keys, backend proxying, or bundled UI components.
+Vue composables for the browsers' built-in AI APIs, as shipped in [Chrome](https://developer.chrome.com/docs/ai/built-in) and [Edge](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api). Add streaming, on-device AI features to Vue 3 apps without API keys, backend proxying, or bundled UI components.
 
-> **Live demo:** [Vue chat demo](https://chriscraig68.github.io/use-chrome-ai/vue/). It uses the same core as the React examples and runs in desktop Chrome with built-in AI enabled.
+> **Live demo:** [Vue chat demo](https://chriscraig68.github.io/use-chrome-ai/vue/). It uses the same core as the React examples and runs in a desktop browser with built-in AI enabled (Chrome or Edge).
 
 ## Why Install It
 
-`@use-chrome-ai/vue` gives Vue apps a small, headless bridge to Chrome built-in AI:
+`@use-chrome-ai/vue` gives Vue apps a small, headless bridge to browser built-in AI:
 
 - One composable gives you a complete streaming chat loop.
 - Model availability, download progress, aborts, and errors are exposed as Vue refs.
@@ -23,7 +23,7 @@ npm i @use-chrome-ai/vue
 
 ## One-Composable Chat
 
-This is the shortest path from a Vue component to an on-device AI chat. `useChat()` streams assistant replies into `messages`, tracks whether the model is ready, and gives you the exact button state needed for Chrome's explicit model download flow.
+This is the shortest path from a Vue component to an on-device AI chat. `useChat()` streams assistant replies into `messages`, tracks whether the model is ready, and gives you the exact button state needed for the browser's explicit model download flow.
 
 ```vue
 <script setup lang="ts">
@@ -83,7 +83,7 @@ The Vue adapter currently ships:
 | `useChat()` | Multi-turn streaming chat with Vue refs |
 | `useModelStatus()` | Binding any core controller to Vue reactivity |
 
-The rest of Chrome's built-in AI APIs are available through the re-exported core:
+The rest of the built-in AI APIs are available through the re-exported core:
 
 ```ts
 import { createSummarizer, useModelStatus } from "@use-chrome-ai/vue";
@@ -102,3 +102,4 @@ Use `status.value.availability` to show unavailable, downloadable, downloading, 
 - [Project README](https://github.com/ChrisCraig68/use-chrome-ai#readme)
 - [Chrome built-in AI setup](https://developer.chrome.com/docs/ai/get-started)
 - [Chrome model download UX guide](https://developer.chrome.com/docs/ai/inform-users-of-model-download)
+- [Edge built-in AI docs](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api)

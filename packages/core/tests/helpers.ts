@@ -25,8 +25,9 @@ export function streamOf(
 export interface FakeApiOptions {
   availability?: string;
   deltas?: string[];
-  /** Emit these `loaded` values through the create() monitor (download progress). */
-  emitProgress?: number[];
+  /** Emit these through the create() monitor (download progress). Bare numbers are
+   *  Chrome-style 0..1 fractions; objects are Edge-style byte counts with a `total`. */
+  emitProgress?: Array<number | { loaded: number; total: number }>;
   /** If set, the streaming method errors with this after emitting deltas. */
   failStreamWith?: () => unknown;
   /** Non-streaming result (summarize/translate/etc.). */
@@ -110,8 +111,9 @@ export function makeFakeApi(opts: FakeApiOptions = {}): FakeApi {
       if (o?.monitor && opts.emitProgress) {
         const target = new EventTarget();
         o.monitor(target);
-        for (const loaded of opts.emitProgress) {
-          target.dispatchEvent(new ProgressEvent("downloadprogress", { loaded }));
+        for (const p of opts.emitProgress) {
+          const init = typeof p === "number" ? { loaded: p } : p;
+          target.dispatchEvent(new ProgressEvent("downloadprogress", init));
         }
       }
       return makeSession();

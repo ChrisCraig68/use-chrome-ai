@@ -88,6 +88,40 @@ describe("SessionLifecycle", () => {
     expect(life.getSnapshot().downloadProgress).toBe(1);
   });
 
+  it("normalizes byte-style downloadprogress (loaded/total, Edge) to a 0..1 fraction", async () => {
+    cleanups.push(setUserActivation(true));
+    const api = makeFakeApi({
+      availability: "downloadable",
+      emitProgress: [
+        { loaded: 1_000_000, total: 4_000_000 },
+        { loaded: 3_000_000, total: 4_000_000 },
+      ],
+    });
+    const life = lifecycleFor(api);
+    const states = await captureStates(life, async () => {
+      await life.download();
+    });
+    const progresses = states.map((s) => s.downloadProgress);
+    expect(progresses).toContain(0.25);
+    expect(progresses).toContain(0.75);
+    expect(progresses.every((p) => p >= 0 && p <= 1)).toBe(true);
+  });
+
+  it("clamps overshooting downloadprogress to 1 (bytes past total, fractions past 1)", async () => {
+    cleanups.push(setUserActivation(true));
+    const api = makeFakeApi({
+      availability: "downloadable",
+      emitProgress: [{ loaded: 5_000_000, total: 4_000_000 }, 1.5],
+    });
+    const life = lifecycleFor(api);
+    const states = await captureStates(life, async () => {
+      await life.download();
+    });
+    const progresses = states.map((s) => s.downloadProgress);
+    expect(progresses.every((p) => p >= 0 && p <= 1)).toBe(true);
+    expect(life.getSnapshot().downloadProgress).toBe(1);
+  });
+
   it("warm() never starts a download — throws ActivationRequiredError when downloadable", async () => {
     // Even WITH a user gesture, a normal call must not silently pull the model.
     cleanups.push(setUserActivation(true));

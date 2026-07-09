@@ -11,7 +11,8 @@ export function Chat() {
     return (
       <div className="panel">
         <p className="muted" style={{ margin: 0 }}>
-          On-device AI isn't available in this browser. Try desktop Chrome 138+.
+          On-device AI isn't available in this browser. Try desktop Chrome or Edge with built-in AI
+          enabled.
         </p>
       </div>
     );

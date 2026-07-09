@@ -28,7 +28,9 @@ export interface LanguageModelOptions {
   system?: string;
   /** Full initial prompt list. A `system` role, if present, MUST be at index 0. */
   initialPrompts?: PromptMessage[];
+  /** Best-effort hint — some browsers/contexts ignore sampling params (Chrome web pages do). */
   topK?: number;
+  /** Best-effort hint — some browsers/contexts ignore sampling params (Chrome web pages do). */
   temperature?: number;
   /** Defaults to `[{ type: 'text', languages: ['en'] }]`. Add image/audio for multimodal. */
   expectedInputs?: Array<{ type: string; languages?: string[] }>;

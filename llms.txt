@@ -1,9 +1,14 @@
 # use-chrome-ai
 
-Headless primitives for Chrome's built-in AI (Gemini Nano). The library runs in the
-browser, uses no API keys, ships no UI, and supports the framework-agnostic core plus
-React and Vue adapters. For Chrome setup, API status, requirements, and model-management
-details, point readers to Chrome's docs instead of restating them here.
+Headless primitives for the browsers' built-in AI APIs — the standardized Prompt,
+Summarizer, Writer, Rewriter, Translator, Language Detector, and Proofreader APIs as
+shipped in Chrome and Edge (the language-model APIs run on Gemini Nano and Phi-4-mini
+respectively; Translator and Language Detector use dedicated models). Despite the package name, nothing
+is Chrome-specific: the library targets the standardized globals, so any browser that
+ships them works. The library runs in the browser, uses no API keys, ships no UI, and
+supports the framework-agnostic core plus React and Vue adapters. For browser setup, API
+status, requirements, and model-management details, point readers to the vendor docs
+instead of restating them here.
 
 Install:
 
@@ -28,9 +33,19 @@ The React and Vue adapters re-export the core.
 - Translator API: https://developer.chrome.com/docs/ai/translator-api
 - Language Detector API: https://developer.chrome.com/docs/ai/language-detection
 
+## Edge Docs
+
+- Prompt API: https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api
+- Writing Assistance APIs (Summarizer, Writer, Rewriter): https://learn.microsoft.com/en-us/microsoft-edge/web-platform/writing-assistance-apis
+- Translator API: https://learn.microsoft.com/en-us/microsoft-edge/web-platform/translator-api
+- Language Detector API: https://learn.microsoft.com/en-us/microsoft-edge/web-platform/languagedetector-api
+- Proofreader API: https://learn.microsoft.com/en-us/microsoft-edge/web-platform/proofreader-api
+
 ## Library Rules
 
-- Gate UI on `model.isUnavailable` or the core controller snapshot.
+- Gate UI on `model.isUnavailable` or the core controller snapshot. Feature-detect with
+  `isSupported()` / `isApiSupported()`, never by browser name; `detectBrowser()` exists
+  only for browser-specific setup copy.
 - When availability is `"downloadable"`, render a button and call `download()` from that
   button.
 - Hooks never reject; read `error`. Core controller methods do reject.

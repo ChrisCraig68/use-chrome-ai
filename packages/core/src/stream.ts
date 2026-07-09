@@ -6,7 +6,7 @@ export function isAbortError(err: unknown): boolean {
 }
 
 /** Read a `ReadableStream<string>` to completion, yielding each chunk. Every
- *  Chrome AI streaming method (`promptStreaming`, `summarizeStreaming`, …) returns
+ *  built-in AI streaming method (`promptStreaming`, `summarizeStreaming`, …) returns
  *  one of these; this is the single place we turn it into an async iterable. */
 export async function* drainStream(stream: ReadableStream<string>): AsyncGenerator<string> {
   const reader = stream.getReader();

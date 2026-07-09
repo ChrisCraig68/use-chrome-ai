@@ -1,6 +1,8 @@
 # @use-chrome-ai/react
 
-React hooks for [Chrome's built-in AI](https://developer.chrome.com/docs/ai/built-in).
+React hooks for the browsers' built-in AI APIs, as shipped in
+[Chrome](https://developer.chrome.com/docs/ai/built-in) and
+[Edge](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api).
 The package depends on and re-exports [`use-chrome-ai`](./core.md), so you can import
 hooks and core factories from one place.
 
@@ -10,11 +12,12 @@ npm i @use-chrome-ai/react
 
 `react` is a peer dependency (`>=18`).
 
-For Chrome setup, API status, and model behavior, use Chrome's
+For browser setup, API status, and model behavior, use Chrome's
 [Get started](https://developer.chrome.com/docs/ai/get-started),
 [API status](https://developer.chrome.com/docs/ai/built-in-apis), and
 [model download](https://developer.chrome.com/docs/ai/inform-users-of-model-download)
-docs.
+docs, or Edge's
+[built-in AI docs](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api).
 
 ## Chat
 
@@ -97,13 +100,16 @@ interface ModelStatus {
   progress: number;
   supported: boolean;
   isUnavailable: boolean;
+  /** Availability hasn't resolved yet — show a neutral state, not a download CTA. */
+  isChecking: boolean;
   isDownloading: boolean;
   isReady: boolean;
   download(): Promise<unknown>;
 }
 ```
 
-Use `model.download()` for your download button. Chrome's
+Use `model.download()` for your download button (the browser requires a user gesture to
+start the download). Chrome's
 [model download guide](https://developer.chrome.com/docs/ai/inform-users-of-model-download)
 covers the browser-side UX.
 

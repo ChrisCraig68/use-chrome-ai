@@ -19,9 +19,9 @@ export interface TranslateParams {
 /**
  * A Translator controller bound to one language pair. Availability is per-pair.
  *
- * Note: Chrome intentionally hides per-language-pair download status for privacy,
+ * Note: Chromium intentionally hides per-language-pair download status for privacy,
  * so `downloadProgress` may stay at 0 then jump to 1 for the Translator — don't rely
- * on a smooth progress bar here the way you can for the Gemini-Nano APIs.
+ * on a smooth progress bar here the way you can for the language-model APIs.
  */
 export function createTranslator(pair: TranslatorPair): TaskController<TranslateParams> {
   const opts = () => ({ sourceLanguage: pair.sourceLanguage, targetLanguage: pair.targetLanguage });

@@ -42,7 +42,7 @@ export interface ModelStatus {
   isDownloading: boolean;
   /** The model is downloaded and ready to use. */
   isReady: boolean;
-  /** Start the model download. Call from a click/tap handler (Chrome needs a gesture). */
+  /** Start the model download. Call from a click/tap handler (the browser needs a gesture). */
   download: () => Promise<unknown>;
 }
 
@@ -75,19 +75,27 @@ export interface Store<S> {
   getServerSnapshot(): S;
 }
 
-export class ChromeAiError extends Error {
+export class BuiltInAiError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "ChromeAiError";
+    this.name = "BuiltInAiError";
   }
 }
 
+/** @deprecated Renamed {@link BuiltInAiError} — the APIs ship in more browsers than
+ *  Chrome (Edge implements them too). Same class; `instanceof` works with either name.
+ *  Note `error.name` is now `"BuiltInAiError"`. */
+export const ChromeAiError = BuiltInAiError;
+/** @deprecated Renamed {@link BuiltInAiError}. */
+export type ChromeAiError = BuiltInAiError;
+
 /** The API's global class is absent, or `availability()` reports `unavailable`.
- *  Built-in AI is desktop-Chromium-only and (in web pages) flag/origin-trial gated. */
-export class UnavailableError extends ChromeAiError {
+ *  Built-in AI ships in desktop Chromium browsers (Chrome, Edge); each API reaches
+ *  each browser on its own schedule, and some are flag/origin-trial gated. */
+export class UnavailableError extends BuiltInAiError {
   constructor(public readonly api: string) {
     super(
-      `${api} is not available here. Chrome 138+ (desktop) with built-in AI enabled is required; in a web page the API may also need a flag or origin-trial token.`,
+      `${api} is not available here. It requires a desktop browser with built-in AI (e.g. recent Chrome or Edge); each API ships on its own schedule and may also need a flag or origin-trial token.`,
     );
     this.name = "UnavailableError";
   }
@@ -95,11 +103,11 @@ export class UnavailableError extends ChromeAiError {
 
 /** The model still needs to download (multi-GB) before this API can run. A normal call
  *  never starts that download — call `download()` explicitly, from a click/tap handler
- *  (Chrome only starts the download from a user gesture). */
-export class ActivationRequiredError extends ChromeAiError {
+ *  (the browser only starts the download from a user gesture). */
+export class ActivationRequiredError extends BuiltInAiError {
   constructor(public readonly api: string) {
     super(
-      `${api} needs its model downloaded first. Call download() from a click/tap handler (Chrome only starts the download from a user gesture); a normal call will not auto-download.`,
+      `${api} needs its model downloaded first. Call download() from a click/tap handler (the browser only starts the download from a user gesture); a normal call will not auto-download.`,
     );
     this.name = "ActivationRequiredError";
   }
@@ -107,7 +115,7 @@ export class ActivationRequiredError extends ChromeAiError {
 
 /** A chat exceeded the model's context window (mapped from `QuotaExceededError`).
  *  The session is unusable; call `reset()` to start a fresh conversation. */
-export class ContextFullError extends ChromeAiError {
+export class ContextFullError extends BuiltInAiError {
   constructor() {
     super(
       "The chat exceeded the model's context window. Call reset() to start a new conversation.",

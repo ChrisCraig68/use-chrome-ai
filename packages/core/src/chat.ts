@@ -38,7 +38,7 @@ const DEFAULT_SYSTEM = "You are a helpful assistant.";
 /**
  * A multi-turn chat over the LanguageModel (Prompt API). One session holds the whole
  * conversation's context. The system message is placed at index 0 of `initialPrompts`
- * (Chrome rejects it anywhere else).
+ * (the API rejects it anywhere else).
  */
 export function createChat(options: ChatOptions = {}): ChatController {
   const messages: ChatMessage[] = options.initialMessages ? [...options.initialMessages] : [];
