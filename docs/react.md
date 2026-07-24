@@ -164,6 +164,21 @@ const json = await controller.prompt("List 3 fruits as JSON.", {
 });
 ```
 
+The same escape hatch binds a controller that lives in *another* context — an extension's
+offscreen document, say — because a connected controller is the same store the hooks
+expect:
+
+```tsx
+import { connectController, useAiController } from "@use-chrome-ai/react";
+
+const { model, controller } = useAiController(
+  () => connectController<TaskController<SummarizeParams>>("summarizer", transport),
+  "summarizer",
+);
+```
+
+See [remote controllers](./core.md#remote-controllers) in the core doc.
+
 ## Signatures
 
 ```ts

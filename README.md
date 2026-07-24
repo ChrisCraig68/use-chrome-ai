@@ -130,12 +130,84 @@ browser (`"chrome" | "edge" | "chromium" | "unknown"`).
 In a Manifest V3 extension the built-in AI globals aren't exposed to the service worker,
 so the common pattern is to own the session in an
 [offscreen document](https://developer.chrome.com/docs/extensions/reference/api/offscreen).
-A user activation from a popup, side panel, or options-page click does **not** propagate to
-that document, so `navigator.userActivation.isActive` is `false` there and `download()`
-throws `ActivationRequiredError` — even though the browser itself would start the download.
+Your UI — popup, side panel, options page, content script — is a different JavaScript
+context, so it can't construct a controller of its own. `exposeController` and
+`connectController` bridge the two over a transport you supply. The core stays
+zero-dependency and free of `chrome.*`; the transport is two functions:
 
-When you've already gated the trigger on a real gesture on the UI side of the message
-boundary, opt out of the local check with `requireGesture: false`:
+```ts
+interface Transport {
+  send(message: unknown): void;
+  /** Register a handler; returns an unsubscribe function. */
+  onMessage(handler: (message: unknown) => void): () => void;
+}
+```
+
+Implement it over `chrome.runtime` messaging, a `MessagePort`, a `BroadcastChannel`, or a
+WebSocket — the same object works on both sides:
+
+```ts
+// offscreen.ts — the context that owns the AI globals
+import { createSummarizer, exposeController } from "use-chrome-ai";
+
+const runtime = {
+  send: (message) => chrome.runtime.sendMessage(message).catch(() => {}),
+  onMessage: (handler) => {
+    const listener = (message: unknown) => handler(message);
+    chrome.runtime.onMessage.addListener(listener);
+    return () => chrome.runtime.onMessage.removeListener(listener);
+  },
+};
+
+exposeController("summarizer", createSummarizer({ type: "key-points" }), runtime);
+```
+
+```tsx
+// sidepanel.tsx — no AI globals here, same controller surface
+import { connectController, type SummarizeParams, type TaskController } from "use-chrome-ai";
+import { useAiController } from "@use-chrome-ai/react";
+
+function Panel() {
+  const { model, controller } = useAiController(
+    () => connectController<TaskController<SummarizeParams>>("summarizer", runtime),
+    "summarizer",
+  );
+  if (model.isChecking) return <p>Checking…</p>;
+  if (model.availability === "downloadable") {
+    return <button onClick={() => model.download()}>Enable on-device AI</button>;
+  }
+  // controller.stream({ text }) yields deltas from the offscreen document.
+}
+```
+
+A connected controller implements the same `Store<ControllerState>` and controller
+interfaces as a local one, so the React and Vue adapters bind to it unchanged. What the
+protocol guarantees:
+
+- Availability, download progress, and phase are pushed on every change and fan out to
+  every connected client. The client serves a stable snapshot reference, and reports
+  `isChecking` until the first push lands rather than flashing a download CTA.
+- `UnavailableError`, `ActivationRequiredError`, `ContextFullError`, and `AbortError` are
+  rethrown as the real classes, so `instanceof` and `isAbortError()` keep working.
+- Streams are tagged per request, so concurrent calls stay separate. Aborting ends the
+  generator immediately and cancels the host request; so does breaking out of the loop.
+- `destroy()` on a client tears down that proxy only — the host controller and any other
+  connected UI keep running.
+
+`createChat` is out of scope (its transcript is mutated in place); expose a
+`LanguageModelController` and keep the transcript in your UI. Full details in the
+[core quick start](docs/core.md#remote-controllers).
+
+### Downloads Across The Boundary
+
+A user activation from a popup, side panel, or options-page click does **not** propagate to
+the offscreen document, so `navigator.userActivation.isActive` is `false` there and
+`download()` throws `ActivationRequiredError` — even though the browser itself would start
+the download. A connected controller handles this for you: it checks the gesture in the
+document where the click happened, then tells the host to skip its own check.
+
+If you're hand-rolling the messaging instead, opt out of the local check yourself once
+you've gated the trigger on a real gesture on the UI side:
 
 ```ts
 // offscreen.ts — owns the controller

@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import type { Transport } from "../src/remote/protocol";
 
 /** Build a `ReadableStream<string>` that enqueues `deltas`, then either closes or
  *  errors. Honors a pre-aborted signal. */
@@ -153,6 +154,51 @@ export function setUserActivation(isActive: boolean): () => void {
     if (prev) Object.defineProperty(nav, "userActivation", prev);
     else delete nav.userActivation;
   };
+}
+
+export interface TransportPair {
+  /** Give this to `exposeController`. */
+  host: Transport;
+  /** Give this to `connectController` — several clients may share it, as they would in
+   *  a real extension where every context sees the same `chrome.runtime` traffic. */
+  client: Transport;
+}
+
+/** A two-ended in-memory {@link Transport}. Messages are JSON round-tripped and
+ *  delivered out of band, so anything the protocol can't serialize (an `Error`, a
+ *  session handle) fails here exactly as it would over `chrome.runtime`. */
+export function transportPair(): TransportPair {
+  const hostHandlers = new Set<(m: unknown) => void>();
+  const clientHandlers = new Set<(m: unknown) => void>();
+
+  const deliver = (to: Set<(m: unknown) => void>, message: unknown): void => {
+    const wire = JSON.stringify(message);
+    queueMicrotask(() => {
+      for (const fn of [...to]) fn(JSON.parse(wire));
+    });
+  };
+  const endpoint = (
+    inbox: Set<(m: unknown) => void>,
+    outbox: Set<(m: unknown) => void>,
+  ): Transport => ({
+    send: (message) => deliver(outbox, message),
+    onMessage: (handler) => {
+      inbox.add(handler);
+      return () => {
+        inbox.delete(handler);
+      };
+    },
+  });
+
+  return {
+    host: endpoint(hostHandlers, clientHandlers),
+    client: endpoint(clientHandlers, hostHandlers),
+  };
+}
+
+/** Let every queued message (and the replies it triggers) land. */
+export function settle(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 /** Collect every state a store emits while `fn` runs. */

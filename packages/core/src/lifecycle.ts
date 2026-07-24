@@ -49,7 +49,9 @@ export interface TaskController<TParams> extends BaseController {
   stream(params: TParams, signal?: AbortSignal): AsyncGenerator<string>;
 }
 
-const SERVER_STATE: ControllerState = Object.freeze({
+/** The one SSR snapshot every controller (local or remote) serves from
+ *  `getServerSnapshot()`. Stable reference, no AI globals on the server. */
+export const SERVER_STATE: ControllerState = Object.freeze({
   supported: false,
   checked: true,
   availability: "unavailable" as const,
@@ -61,7 +63,7 @@ const SERVER_STATE: ControllerState = Object.freeze({
 /** Whether there's a transient user activation right now. Chromium browsers require
  *  one to *start* a model download. Missing API → assume true so we never block on
  *  a browser that wouldn't gate downloads anyway. */
-function hasUserActivation(): boolean {
+export function hasUserActivation(): boolean {
   const ua = (globalThis as { navigator?: { userActivation?: { isActive?: boolean } } }).navigator
     ?.userActivation;
   return ua && typeof ua.isActive === "boolean" ? ua.isActive : true;

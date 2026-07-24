@@ -51,6 +51,10 @@ The React and Vue adapters re-export the core.
 - Hooks never reject; read `error`. Core controller methods do reject.
 - Streaming hooks write into `messages` (`useChat`) or `result` (task hooks). Abort with
   `stop()`.
+- When the caller's context has no AI globals (an extension popup or side panel), don't
+  hand-roll messaging: `exposeController` where the globals live, `connectController`
+  elsewhere. The proxy is the same `Store` the hooks bind to. `createChat` is not
+  bridgeable — expose a `LanguageModelController` instead.
 
 ## Docs
 
@@ -63,7 +67,8 @@ The React and Vue adapters re-export the core.
 
 - `use-chrome-ai`: `createChat`, `createLanguageModel`, `createSummarizer`,
   `createWriter`, `createRewriter`, `createProofreader`, `createTranslator`,
-  `createLanguageDetector`, capability helpers, stream helpers, shared types.
+  `createLanguageDetector`, `exposeController` / `connectController`, capability helpers,
+  stream helpers, shared types.
 - `@use-chrome-ai/react`: `useChat`, `usePrompt`, `useSummarizer`, `useWriter`,
   `useRewriter`, `useProofreader`, `useTranslator`, `useLanguageDetector`,
   `useModelStatus`, `useAiController`.

@@ -95,7 +95,18 @@ const summary = await summarizer.run({ text: article });
 ```
 
 Use `status.value.availability` to show a download button, progress, or fallback for any
-core controller. Edge's equivalents are linked from the [core doc](./core.md#browser-docs);
+core controller. `useModelStatus` takes any `Store`, so a
+[remote controller](./core.md#remote-controllers) — one living in another context, such as
+an extension's offscreen document — binds the same way:
+
+```ts
+import { connectController, useModelStatus } from "@use-chrome-ai/vue";
+
+const summarizer = connectController("summarizer", transport);
+const status = useModelStatus(summarizer);
+```
+
+Edge's equivalents are linked from the [core doc](./core.md#browser-docs);
 Chrome's API pages cover the underlying browser behavior:
 [Prompt](https://developer.chrome.com/docs/ai/prompt-api),
 [Summarizer](https://developer.chrome.com/docs/ai/summarizer-api),
