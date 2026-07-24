@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useChat } from "../src/useChat";
 import { useSummarizer } from "../src/useSummarizer";
-import { installGlobal, makeFakeApi } from "./helpers";
+import { installGlobal, makeFakeApi, setUserActivation } from "./helpers";
 
 const cleanups: Array<() => void> = [];
 afterEach(() => {
@@ -39,6 +39,23 @@ function SummarizerProbe() {
         go
       </button>
       <p data-testid="result">{result}</p>
+    </div>
+  );
+}
+
+function DownloadProbe() {
+  const { model } = useChat();
+  return (
+    <div>
+      <span data-testid="availability">{model.availability}</span>
+      <button
+        type="button"
+        onClick={() => {
+          void model.download({ requireGesture: false });
+        }}
+      >
+        download
+      </button>
     </div>
   );
 }
@@ -115,5 +132,23 @@ describe("React hooks", () => {
     render(<SummarizerProbe />);
     fireEvent.click(screen.getByText("go"));
     await waitFor(() => expect(screen.getByTestId("result").textContent).toBe("Summary"));
+  });
+
+  it("model.download({ requireGesture: false }) starts a download without a gesture", async () => {
+    // Mirrors an extension offscreen document: no activation in this context, but the
+    // adapter passes the opt-out through to the controller so the download still starts.
+    cleanups.push(setUserActivation(false));
+    const api = makeFakeApi({ availability: "downloadable" });
+    cleanups.push(installGlobal("LanguageModel", api.Ctor));
+
+    render(<DownloadProbe />);
+    await waitFor(() =>
+      expect(screen.getByTestId("availability").textContent).toBe("downloadable"),
+    );
+
+    fireEvent.click(screen.getByText("download"));
+
+    await waitFor(() => expect(screen.getByTestId("availability").textContent).toBe("available"));
+    expect(api.createCount()).toBe(1);
   });
 });

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import {
   type BaseController,
   type ControllerState,
+  type DownloadOptions,
   deriveModelStatus,
   isAbortError,
   type ModelStatus,
@@ -56,7 +57,7 @@ export interface AiStatus {
 
 export function useAiStatus(controller: BaseController): AiStatus {
   const status = useModelStatus(controller);
-  const download = useCallback(() => controller.download(), [controller]);
+  const download = useCallback((opts?: DownloadOptions) => controller.download(opts), [controller]);
   useEffect(() => {
     void controller.refresh();
   }, [controller]);

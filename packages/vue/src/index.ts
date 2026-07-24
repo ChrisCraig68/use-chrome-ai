@@ -2,6 +2,7 @@ import {
   type ChatMessage,
   type ChatOptions,
   createChat,
+  type DownloadOptions,
   deriveModelStatus,
   isAbortError,
   type ModelStatus,
@@ -53,7 +54,7 @@ export function useChat(options: ChatOptions = {}): UseChatReturn {
   onMounted(() => {
     void chat.refresh();
   });
-  const download = () => chat.download();
+  const download = (opts?: DownloadOptions) => chat.download(opts);
   const model = computed(() => deriveModelStatus(status.value, download));
   const messages = shallowRef<ChatMessage[]>(chat.messages.slice());
   const isStreaming = ref(false);

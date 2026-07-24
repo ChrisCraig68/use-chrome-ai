@@ -4,6 +4,7 @@ import {
   ActivationRequiredError,
   type Availability,
   type ControllerState,
+  type DownloadOptions,
   type Phase,
   type Store,
   UnavailableError,
@@ -33,8 +34,11 @@ export interface BaseController extends Store<ControllerState> {
   /** Open a session for an already-downloaded model; NEVER starts a download (throws
    *  {@link ActivationRequiredError} when the model is still `downloadable`). */
   warm(opts?: { signal?: AbortSignal }): Promise<unknown>;
-  /** Explicitly download the model. Call from a click/tap handler (the browser needs a gesture). */
-  download(opts?: { signal?: AbortSignal }): Promise<unknown>;
+  /** Explicitly download the model. Call from a click/tap handler (the browser needs a
+   *  gesture). Pass `{ requireGesture: false }` to bypass the local activation check when
+   *  the gesture was verified across a message boundary (e.g. an extension offscreen
+   *  document) — see {@link DownloadOptions}. */
+  download(opts?: DownloadOptions): Promise<unknown>;
   invalidate(): void;
   destroy(): void;
 }
@@ -171,12 +175,17 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
   /**
    * Explicitly download the model (and open the session). Requires a user gesture —
    * the browser only starts the download from one. Name it in click/tap handlers.
+   *
+   * Pass `{ requireGesture: false }` to skip the local `navigator.userActivation` check
+   * when the gesture was verified elsewhere (e.g. across an extension offscreen document's
+   * message boundary, where activation doesn't propagate). {@link warm} is unaffected — it
+   * never downloads, regardless of this option.
    */
-  download(opts: { signal?: AbortSignal } = {}): Promise<TSession> {
+  download(opts: DownloadOptions = {}): Promise<TSession> {
     return this.ensure(true, opts);
   }
 
-  private async ensure(allowDownload: boolean, opts: { signal?: AbortSignal }): Promise<TSession> {
+  private async ensure(allowDownload: boolean, opts: DownloadOptions): Promise<TSession> {
     opts.signal?.throwIfAborted();
     if (this.current) return this.current;
     if (this.creating) return this.creating;
@@ -190,9 +199,15 @@ export class SessionLifecycle<TSession> implements Store<ControllerState> {
     if (this.state.availability === "unavailable") throw new UnavailableError(this.config.api);
     // A first-time download is required only when the model is 'downloadable'. We never
     // start it from a normal call (warm) — the caller must invoke download() explicitly,
-    // and from a user gesture (the browser's requirement). 'downloading' (join the in-flight
-    // download) and 'available' (just open a session) proceed without a fresh download.
-    if (this.state.availability === "downloadable" && (!allowDownload || !hasUserActivation())) {
+    // and from a user gesture (the browser's requirement) unless they opt out with
+    // requireGesture:false (gesture verified across a message boundary, e.g. an extension
+    // offscreen document). 'downloading' (join the in-flight download) and 'available'
+    // (just open a session) proceed without a fresh download.
+    const requireGesture = opts.requireGesture ?? true;
+    if (
+      this.state.availability === "downloadable" &&
+      (!allowDownload || (requireGesture && !hasUserActivation()))
+    ) {
       throw new ActivationRequiredError(this.config.api);
     }
 

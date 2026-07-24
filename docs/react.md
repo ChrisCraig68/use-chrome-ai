@@ -104,7 +104,7 @@ interface ModelStatus {
   isChecking: boolean;
   isDownloading: boolean;
   isReady: boolean;
-  download(): Promise<unknown>;
+  download(opts?: { signal?: AbortSignal; requireGesture?: boolean }): Promise<unknown>;
 }
 ```
 
@@ -112,6 +112,12 @@ Use `model.download()` for your download button (the browser requires a user ges
 start the download). Chrome's
 [model download guide](https://developer.chrome.com/docs/ai/inform-users-of-model-download)
 covers the browser-side UX.
+
+Building a browser extension whose UI drives a session in an
+[offscreen document](https://developer.chrome.com/docs/extensions/reference/api/offscreen)?
+A click's activation doesn't cross the message boundary, so call
+`model.download({ requireGesture: false })` once you've verified the gesture on the UI
+side. See the [core quick start](./core.md#download-and-status) for the full rationale.
 
 ## Hooks
 
