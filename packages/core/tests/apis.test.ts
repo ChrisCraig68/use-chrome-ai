@@ -57,6 +57,20 @@ describe("per-API factories", () => {
     expect(api.createCount()).toBe(0); // nothing was created/downloaded
   });
 
+  it("download({ requireGesture: false }) opts out of the gesture check on a factory controller", async () => {
+    // The offscreen-document opt-out threads from SessionLifecycle through store() to
+    // every factory's BaseController.download.
+    cleanups.push(setUserActivation(false));
+    const api = makeFakeApi({ availability: "downloadable" });
+    cleanups.push(installGlobal("Summarizer", api.Ctor));
+    const s = createSummarizer();
+    await expect(s.download({ requireGesture: false })).resolves.toBeDefined();
+    expect(api.createCount()).toBe(1);
+    // The default still throws without a gesture.
+    const guarded = createSummarizer();
+    await expect(guarded.download()).rejects.toBeInstanceOf(ActivationRequiredError);
+  });
+
   it("languageModel prompts on a throwaway clone", async () => {
     const api = makeFakeApi({ result: "answer" });
     cleanups.push(installGlobal("LanguageModel", api.Ctor));

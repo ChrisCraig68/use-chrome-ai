@@ -22,6 +22,23 @@ export interface ControllerState {
   readonly error: Error | null;
 }
 
+/** Options for an explicit model download (`download()` / {@link ModelStatus.download}). */
+export interface DownloadOptions {
+  /** Abort the download (and the underlying `create()`). */
+  signal?: AbortSignal;
+  /**
+   * Whether to require a transient user activation (`navigator.userActivation.isActive`)
+   * in *this* document before starting the download. Defaults to `true`.
+   *
+   * Set it to `false` only when the gesture was already verified on the other side of a
+   * message boundary — the canonical case being a Chrome extension **offscreen document**,
+   * which owns the AI session but where a popup/side-panel click's activation does not
+   * propagate (so `isActive` is `false` there even though the browser would start the
+   * download). This is a deliberate opt-out for that cross-document pattern, not a general
+   * license to auto-download multi-GB weights. `warm()` never downloads regardless. */
+  requireGesture?: boolean;
+}
+
 /** A UI-friendly view of a controller's model lifecycle: the raw snapshot, derived
  *  booleans, download progress, and the gesture-gated download trigger. Framework
  *  adapters group these under a single `model` field so a hook's own surface stays small. */
@@ -42,15 +59,17 @@ export interface ModelStatus {
   isDownloading: boolean;
   /** The model is downloaded and ready to use. */
   isReady: boolean;
-  /** Start the model download. Call from a click/tap handler (the browser needs a gesture). */
-  download: () => Promise<unknown>;
+  /** Start the model download. Call from a click/tap handler (the browser needs a gesture).
+   *  Pass `{ requireGesture: false }` only when the gesture was verified across a message
+   *  boundary (e.g. an extension offscreen document) — see {@link DownloadOptions}. */
+  download: (opts?: DownloadOptions) => Promise<unknown>;
 }
 
 /** Build a {@link ModelStatus} view from a controller snapshot and its `download` trigger.
  *  Shared by the React and Vue adapters so the derivation lives in exactly one place. */
 export function deriveModelStatus(
   status: ControllerState,
-  download: () => Promise<unknown>,
+  download: (opts?: DownloadOptions) => Promise<unknown>,
 ): ModelStatus {
   return {
     status,

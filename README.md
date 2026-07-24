@@ -125,6 +125,37 @@ Feature-detect with `isSupported()` / `isApiSupported()` — never by browser na
 need to show browser-specific setup instructions, `detectBrowser()` identifies the host
 browser (`"chrome" | "edge" | "chromium" | "unknown"`).
 
+## Browser Extensions (Offscreen Documents)
+
+In a Manifest V3 extension the built-in AI globals aren't exposed to the service worker,
+so the common pattern is to own the session in an
+[offscreen document](https://developer.chrome.com/docs/extensions/reference/api/offscreen).
+A user activation from a popup, side panel, or options-page click does **not** propagate to
+that document, so `navigator.userActivation.isActive` is `false` there and `download()`
+throws `ActivationRequiredError` — even though the browser itself would start the download.
+
+When you've already gated the trigger on a real gesture on the UI side of the message
+boundary, opt out of the local check with `requireGesture: false`:
+
+```ts
+// offscreen.ts — owns the controller
+import { createChat } from "use-chrome-ai";
+
+const chat = createChat();
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type === "download-model") {
+    // The popup verified the click before posting this message.
+    void chat.download({ requireGesture: false });
+  }
+});
+```
+
+Use it only for that cross-document case — it bypasses this library's local gesture check,
+not the browser's own download policy. It applies to explicit `download()` only: `warm()`
+and the normal `run` / `stream` / `send` / `prompt` paths never download regardless. React
+and Vue UIs pass the same option through `model.download({ requireGesture: false })`.
+
 ## APIs
 
 | API | Core | React | Vue |

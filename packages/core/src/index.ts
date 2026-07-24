@@ -64,7 +64,14 @@ export { type AiBrowser, detectBrowser } from "./provider";
 // Streaming primitives
 export { drainStream, isAbortError } from "./stream";
 // Status & errors
-export type { Availability, ControllerState, ModelStatus, Phase, Store } from "./types";
+export type {
+  Availability,
+  ControllerState,
+  DownloadOptions,
+  ModelStatus,
+  Phase,
+  Store,
+} from "./types";
 export {
   ActivationRequiredError,
   BuiltInAiError,

@@ -143,6 +143,14 @@ and [model management guide](https://developer.chrome.com/docs/ai/understand-bui
 cover the browser behavior behind that state; Edge documents its model lifecycle in its
 [Prompt API docs](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api).
 
+In a browser extension [offscreen document](https://developer.chrome.com/docs/extensions/reference/api/offscreen)
+— the standard Manifest V3 place to own a session, since the globals aren't exposed to the
+service worker — a popup/side-panel click's activation doesn't reach the offscreen
+document, so `download()` throws `ActivationRequiredError` even though the browser would
+start the download. Call `controller.download({ requireGesture: false })` there, once
+you've verified the gesture on the UI side of the message boundary. It bypasses only this
+library's local activation check; `warm()` never downloads regardless.
+
 ## Reference
 
 Import from `use-chrome-ai`:
@@ -179,7 +187,9 @@ interface BaseController {
   getServerSnapshot(): ControllerState;
   refresh(): Promise<Availability>;
   warm(opts?: { signal?: AbortSignal }): Promise<unknown>;
-  download(opts?: { signal?: AbortSignal }): Promise<unknown>;
+  /** `requireGesture` defaults to true; set false only to bypass the local activation
+   *  check across a message boundary (e.g. an extension offscreen document). */
+  download(opts?: { signal?: AbortSignal; requireGesture?: boolean }): Promise<unknown>;
   invalidate(): void;
   destroy(): void;
 }

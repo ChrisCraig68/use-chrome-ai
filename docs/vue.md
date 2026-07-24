@@ -74,6 +74,12 @@ model.value.download(); // wire this to your download button
 
 In templates, Vue unwraps the ref, so `model.isReady` works as shown above.
 
+Building a browser extension whose UI drives a session in an
+[offscreen document](https://developer.chrome.com/docs/extensions/reference/api/offscreen)?
+A click's activation doesn't cross the message boundary, so call
+`model.value.download({ requireGesture: false })` once you've verified the gesture on the UI
+side. See the [core quick start](./core.md#download-and-status) for the full rationale.
+
 ## Core Controllers
 
 This adapter currently ships `useChat` and `useModelStatus`. The rest of the APIs are

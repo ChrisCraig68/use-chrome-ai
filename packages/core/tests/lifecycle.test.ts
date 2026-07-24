@@ -137,6 +137,26 @@ describe("SessionLifecycle", () => {
     await expect(life.download()).rejects.toBeInstanceOf(ActivationRequiredError);
   });
 
+  it("download({ requireGesture: false }) bypasses the activation check (extension offscreen doc)", async () => {
+    // No transient activation in this document: the gesture happened in the extension's
+    // popup/side panel and was verified before the message reached the offscreen document.
+    cleanups.push(setUserActivation(false));
+    const api = makeFakeApi({ availability: "downloadable" });
+    const life = lifecycleFor(api);
+    const session = await life.download({ requireGesture: false });
+    expect(session).toBeDefined();
+    expect(api.createCount()).toBe(1); // the download actually started
+    expect(life.getSnapshot().availability).toBe("available");
+  });
+
+  it("download({ requireGesture: true }) matches the default — still throws without a gesture", async () => {
+    cleanups.push(setUserActivation(false));
+    const life = lifecycleFor(makeFakeApi({ availability: "downloadable" }));
+    await expect(life.download({ requireGesture: true })).rejects.toBeInstanceOf(
+      ActivationRequiredError,
+    );
+  });
+
   it("warm() opens a session without a gesture once availability is 'available'", async () => {
     cleanups.push(setUserActivation(false));
     const api = makeFakeApi({ availability: "available" });
