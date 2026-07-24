@@ -1,6 +1,6 @@
 {
   "name": "@use-chrome-ai/react",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "React hooks for the built-in AI APIs in Chrome and Edge, built on use-chrome-ai. Headless — bring your own UI.",
   "license": "MIT",
   "repository": {

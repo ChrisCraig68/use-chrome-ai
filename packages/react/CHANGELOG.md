@@ -1,5 +1,12 @@
 # @use-chrome-ai/react
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [9417ccd]
+  - use-chrome-ai@0.4.0
+
 ## 0.1.5
 
 ### Patch Changes
