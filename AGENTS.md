@@ -51,6 +51,10 @@ in a browser with built-in AI enabled — Chrome and/or Edge (`pnpm dev:react`).
   `getServerSnapshot`). Every framework adapter binds to it.
 - **Per-API factories** live in `packages/core/src/apis/`. One per global class. `task.ts` builds
   the streaming request/response controllers (Summarizer/Writer/Rewriter/Translator).
+- **`packages/core/src/remote/` bridges a controller across JS contexts** (extension offscreen
+  document ↔ side panel). `host.ts` serves one, `client.ts` returns a proxy implementing the
+  same `Store` + controller interfaces, `protocol.ts` owns the versioned message shapes and the
+  Error/state wire forms. It talks only to the injected `Transport` — no `chrome.*` anywhere.
 - The React/Vue adapters are **thin** — they own a controller and mirror its status into the
   framework's reactivity. New methods/behavior belong in core, not the adapter.
 

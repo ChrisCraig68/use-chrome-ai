@@ -61,6 +61,15 @@ export {
 } from "./lifecycle";
 // Browser identification (for setup copy — never gate features on it)
 export { type AiBrowser, detectBrowser } from "./provider";
+// Remote controllers (bridge a controller across contexts, e.g. an extension's
+// offscreen document ↔ side panel)
+export {
+  type ConnectOptions,
+  connectController,
+  type RemoteController,
+} from "./remote/client";
+export { type ExposeOptions, exposeController } from "./remote/host";
+export { PROTOCOL_VERSION, type Transport } from "./remote/protocol";
 // Streaming primitives
 export { drainStream, isAbortError } from "./stream";
 // Status & errors
