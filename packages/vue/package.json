@@ -1,6 +1,6 @@
 {
   "name": "@use-chrome-ai/vue",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Vue composables for the built-in AI APIs in Chrome and Edge, built on use-chrome-ai. Headless — bring your own UI.",
   "license": "MIT",
   "repository": {
